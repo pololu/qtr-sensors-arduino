@@ -1,5 +1,5 @@
 /*
-  PololuQTRSensors.cpp - Arduino ibrary for using Pololu QTR reflectance
+  QTRSensors.cpp - Arduino library for using Pololu QTR reflectance
 	sensors and reflectance sensor arrays: QTR-1A, QTR-8A, QTR-1RC, and 
 	QTR-8RC.  The object used will determine the type of the sensor (either
 	QTR-xA or QTR-xRC).  Then simply specify in the constructor which 
@@ -8,13 +8,13 @@
 	values correspond to higher reflectance (e.g. white) while larger
 	sensor values correspond to lower reflectance (e.g. black or a void).
 	
-	* PololuQTRSensorsRC should be used for QTR-1RC and QTR-8RC sensors.
-	* PololuQTRSensorsAnalog should be used for QTR-1A and QTR-8A sensors.
+	* QTRSensorsRC should be used for QTR-1RC and QTR-8RC sensors.
+	* QTRSensorsAnalog should be used for QTR-1A and QTR-8A sensors.
 */
 	
 /*
  * Written by Ben Schmidel et al., October 4, 2010.
- * Copyright (c) 2008-2010 Pololu Corporation. For more information, see
+ * Copyright (c) 2008-2012 Pololu Corporation. For more information, see
  *
  *   http://www.pololu.com
  *   http://forum.pololu.com
@@ -32,9 +32,8 @@
  */
 
 #include <stdlib.h>
-#include "PololuQTRSensors.h"
-#include "WConstants.h"
-
+#include "QTRSensors.h"
+#include <Arduino.h>
 
 #define QTR_RC		0
 #define QTR_A		1
@@ -42,7 +41,7 @@
 
 
 // Base class data member initialization (called by derived class init())
-void PololuQTRSensors::init(unsigned char *pins, unsigned char numSensors, 
+void QTRSensors::init(unsigned char *pins, unsigned char numSensors, 
   unsigned char emitterPin, unsigned char type)
 {
 	calibratedMinimumOn=0;
@@ -81,7 +80,7 @@ void PololuQTRSensors::init(unsigned char *pins, unsigned char numSensors,
 // The values returned are a measure of the reflectance in abstract units,
 // with higher values corresponding to lower reflectance (e.g. a black
 // surface or a void).
-void PololuQTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
+void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
 {
 	unsigned int off_values[QTR_MAX_SENSORS];
 	unsigned char i;
@@ -91,17 +90,17 @@ void PololuQTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
 
 	if (_type == QTR_RC)
 	{
-		((PololuQTRSensorsRC*)this)->readPrivate(sensor_values);
+		((QTRSensorsRC*)this)->readPrivate(sensor_values);
 		emittersOff();
 		if(readMode == QTR_EMITTERS_ON_AND_OFF)
-			((PololuQTRSensorsRC*)this)->readPrivate(off_values);
+			((QTRSensorsRC*)this)->readPrivate(off_values);
 	}
 	else
 	{
-		((PololuQTRSensorsAnalog*)this)->readPrivate(sensor_values);
+		((QTRSensorsAnalog*)this)->readPrivate(sensor_values);
 		emittersOff();
 		if(readMode == QTR_EMITTERS_ON_AND_OFF)
-			((PololuQTRSensorsAnalog*)this)->readPrivate(off_values);
+			((QTRSensorsAnalog*)this)->readPrivate(off_values);
 	}
 
 	if(readMode == QTR_EMITTERS_ON_AND_OFF)
@@ -118,7 +117,7 @@ void PololuQTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
 // read method, and calling these functions before or
 // after the reading the sensors will have no effect on the
 // readings, but you may wish to use these for testing purposes.
-void PololuQTRSensors::emittersOff()
+void QTRSensors::emittersOff()
 {
 	if (_emitterPin == QTR_NO_EMITTER_PIN)
 		return;
@@ -126,7 +125,7 @@ void PololuQTRSensors::emittersOff()
 	digitalWrite(_emitterPin, LOW);
 }
 
-void PololuQTRSensors::emittersOn()
+void QTRSensors::emittersOn()
 {
 	if (_emitterPin == QTR_NO_EMITTER_PIN)
 		return;
@@ -135,7 +134,7 @@ void PololuQTRSensors::emittersOn()
 }
 
 // Resets the calibration.
-void PololuQTRSensors::resetCalibration()
+void QTRSensors::resetCalibration()
 {
 	unsigned char i;
 	for(i=0;i<_numSensors;i++)
@@ -155,7 +154,7 @@ void PololuQTRSensors::resetCalibration()
 // calibration.  The sensor values are not returned; instead, the
 // maximum and minimum values found over time are stored internally
 // and used for the readCalibrated() method.
-void PololuQTRSensors::calibrate(unsigned char readMode)
+void QTRSensors::calibrate(unsigned char readMode)
 {
 	if(readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_ON)
 	{
@@ -173,7 +172,7 @@ void PololuQTRSensors::calibrate(unsigned char readMode)
 	}
 }
 
-void PololuQTRSensors::calibrateOnOrOff(unsigned int **calibratedMinimum,
+void QTRSensors::calibrateOnOrOff(unsigned int **calibratedMinimum,
 										unsigned int **calibratedMaximum,
 										unsigned char readMode)
 {
@@ -241,7 +240,7 @@ void PololuQTRSensors::calibrateOnOrOff(unsigned int **calibratedMinimum,
 // corresponds to the maximum value.  Calibration values are
 // stored separately for each sensor, so that differences in the
 // sensors are accounted for automatically.
-void PololuQTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readMode)
+void QTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char readMode)
 {
 	int i;
 
@@ -321,7 +320,7 @@ void PololuQTRSensors::readCalibrated(unsigned int *sensor_values, unsigned char
 // black, set the optional second argument white_line to true.  In
 // this case, each sensor value will be replaced by (1000-value)
 // before the averaging.
-int PololuQTRSensors::readLine(unsigned int *sensor_values,
+int QTRSensors::readLine(unsigned int *sensor_values,
 	unsigned char readMode, unsigned char white_line)
 {
 	unsigned char i, on_line = 0;
@@ -372,7 +371,7 @@ int PololuQTRSensors::readLine(unsigned int *sensor_values,
 
 
 // Derived RC class constructor
-PololuQTRSensorsRC::PololuQTRSensorsRC(unsigned char* pins,
+QTRSensorsRC::QTRSensorsRC(unsigned char* pins,
   unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
 {
 	_pins = 0;
@@ -400,10 +399,10 @@ PololuQTRSensorsRC::PololuQTRSensorsRC(unsigned char* pins,
 // modules.  If you are using a 1RC (i.e. if there is no emitter pin),
 // or if you just want the emitters on all the time and don't want to
 // use an I/O pin to control it, use a value of 255 (QTR_NO_EMITTER_PIN).
-void PololuQTRSensorsRC::init(unsigned char* pins,
+void QTRSensorsRC::init(unsigned char* pins,
 	unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
 {
-	PololuQTRSensors::init(pins, numSensors, emitterPin, QTR_RC);
+	QTRSensors::init(pins, numSensors, emitterPin, QTR_RC);
 	
 	_maxValue = timeout;
 }
@@ -417,7 +416,7 @@ void PololuQTRSensorsRC::init(unsigned char* pins,
 // ...
 // The values returned are in microseconds and range from 0 to
 // timeout (as specified in the constructor).
-void PololuQTRSensorsRC::readPrivate(unsigned int *sensor_values)
+void QTRSensorsRC::readPrivate(unsigned int *sensor_values)
 {
 	unsigned char i;
 	
@@ -454,7 +453,7 @@ void PololuQTRSensorsRC::readPrivate(unsigned int *sensor_values)
 
 
 // Derived Analog class constructor
-PololuQTRSensorsAnalog::PololuQTRSensorsAnalog(unsigned char* pins,
+QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* pins,
   unsigned char numSensors, unsigned char numSamplesPerSensor,
   unsigned char emitterPin)
 {
@@ -486,11 +485,11 @@ PololuQTRSensorsAnalog::PololuQTRSensorsAnalog(unsigned char* pins,
 // modules.  If you are using a 1RC (i.e. if there is no emitter pin),
 // or if you just want the emitters on all the time and don't want to
 // use an I/O pin to control it, use a value of 255 (QTR_NO_EMITTER_PIN).
-void PololuQTRSensorsAnalog::init(unsigned char* pins,
+void QTRSensorsAnalog::init(unsigned char* pins,
 	unsigned char numSensors, unsigned char numSamplesPerSensor,
 	unsigned char emitterPin)
 {	
-	PololuQTRSensors::init(pins, numSensors, emitterPin, QTR_A);
+	QTRSensors::init(pins, numSensors, emitterPin, QTR_A);
 	
 	_numSamplesPerSensor = numSamplesPerSensor;
 	_maxValue = 1023; // this is the maximum returned by the A/D conversion
@@ -505,7 +504,7 @@ void PololuQTRSensorsAnalog::init(unsigned char* pins,
 // The values returned are a measure of the reflectance in terms of a
 // 10-bit ADC average with higher values corresponding to lower 
 // reflectance (e.g. a black surface or a void).
-void PololuQTRSensorsAnalog::readPrivate(unsigned int *sensor_values)
+void QTRSensorsAnalog::readPrivate(unsigned int *sensor_values)
 {
 	unsigned char i, j;
 
@@ -531,7 +530,7 @@ void PololuQTRSensorsAnalog::readPrivate(unsigned int *sensor_values)
 }
 
 // the destructor frees up allocated memory
-PololuQTRSensors::~PololuQTRSensors()
+QTRSensors::~QTRSensors()
 {
 	if (_pins)
 		free(_pins);

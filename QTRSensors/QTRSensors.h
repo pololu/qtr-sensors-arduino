@@ -1,5 +1,5 @@
 /*
-  PololuQTRSensors.h - Library for using Pololu QTR reflectance
+  QTRSensors.h - Library for using Pololu QTR reflectance
 	sensors and reflectance sensor arrays: QTR-1A, QTR-8A, QTR-1RC, and 
 	QTR-8RC.  The object used will determine the type of the sensor (either
 	QTR-xA or QTR-xRC).  Then simply specify in the constructor which 
@@ -8,13 +8,13 @@
 	values correspond to higher reflectance (e.g. white) while larger
 	sensor values correspond to lower reflectance (e.g. black or a void).
 	
-	* PololuQTRSensorsRC should be used for QTR-1RC and QTR-8RC sensors.
-	* PololuQTRSensorsAnalog should be used for QTR-1A and QTR-8A sensors.
+	* QTRSensorsRC should be used for QTR-1RC and QTR-8RC sensors.
+	* QTRSensorsAnalog should be used for QTR-1A and QTR-8A sensors.
 */
 	
 /*
  * Written by Ben Schmidel et al., October 4, 2010
- * Copyright (c) 2008-2010 Pololu Corporation. For more information, see
+ * Copyright (c) 2008-2012 Pololu Corporation. For more information, see
  *
  *   http://www.pololu.com
  *   http://forum.pololu.com
@@ -31,8 +31,8 @@
  * to be responsible for all resulting costs and damages.
  */
 
-#ifndef PololuQTRSensors_h
-#define PololuQTRSensors_h
+#ifndef QTRSensors_h
+#define QTRSensors_h
 
 #define QTR_EMITTERS_OFF 0
 #define QTR_EMITTERS_ON 1
@@ -45,7 +45,7 @@
 // This class cannot be instantiated directly (it has no constructor).
 // Instead, you should instantiate one of its two derived classes (either the
 // QTR-A or QTR-RC version, depending on the type of your sensor).
-class PololuQTRSensors
+class QTRSensors
 {
   public:
 	
@@ -127,11 +127,11 @@ class PololuQTRSensors
 	unsigned int *calibratedMinimumOff;
 	unsigned int *calibratedMaximumOff;
 	
-	~PololuQTRSensors();
+	~QTRSensors();
 
   protected:
 
-	PololuQTRSensors()
+	QTRSensors()
 	{
 	
 	};
@@ -160,20 +160,20 @@ class PololuQTRSensors
 
 
 // Object to be used for QTR-1RC and QTR-8RC sensors
-class PololuQTRSensorsRC : public PololuQTRSensors
+class QTRSensorsRC : public QTRSensors
 {
-	// allows the base PololuQTRSensors class to access this class' 
+	// allows the base QTRSensors class to access this class' 
 	// readPrivate()
-	friend class PololuQTRSensors;
+	friend class QTRSensors;
 	
   public:
   
 	// if this constructor is used, the user must call init() before using
 	// the methods in this class
-	PololuQTRSensorsRC() { }
+	QTRSensorsRC() { }
 	
 	// this constructor just calls init()
-	PololuQTRSensorsRC(unsigned char* pins, unsigned char numSensors, 
+	QTRSensorsRC(unsigned char* pins, unsigned char numSensors, 
 		  unsigned int timeout = 4000, unsigned char emitterPin = 255);
 
 	// The array 'pins' contains the Arduino pin number for each sensor.
@@ -215,20 +215,20 @@ class PololuQTRSensorsRC : public PololuQTRSensors
 
 
 // Object to be used for QTR-1A and QTR-8A sensors
-class PololuQTRSensorsAnalog : public PololuQTRSensors
+class QTRSensorsAnalog : public QTRSensors
 {
-	// allows the base PololuQTRSensors class to access this class
+	// allows the base QTRSensors class to access this class
 	// readPrivate()
-	friend class PololuQTRSensors;
+	friend class QTRSensors;
 	
   public:
   
 	// if this constructor is used, the user must call init() before using
 	// the methods in this class
-	PololuQTRSensorsAnalog() { }
+	QTRSensorsAnalog() { }
 	
 	// this constructor just calls init()
-	PololuQTRSensorsAnalog(unsigned char* pins, 
+	QTRSensorsAnalog(unsigned char* pins, 
 		unsigned char numSensors, unsigned char numSamplesPerSensor = 4,
 		unsigned char emitterPin = 255);
 

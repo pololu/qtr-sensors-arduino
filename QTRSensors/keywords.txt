@@ -1,14 +1,14 @@
 #######################################
-# Syntax Coloring Map PololuQTRSensors
+# Syntax Coloring Map QTRSensors
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-PololuQTRSensorsAnalog	KEYWORD1
-PololuQTRSensorsRC	KEYWORD1
-PololuQTRSensors	KEYWORD1
+QTRSensorsAnalog	KEYWORD1
+QTRSensorsRC	KEYWORD1
+QTRSensors	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

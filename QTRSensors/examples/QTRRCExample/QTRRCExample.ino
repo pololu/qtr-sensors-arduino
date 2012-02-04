@@ -1,4 +1,4 @@
-#include <PololuQTRSensors.h>
+#include <QTRSensors.h>
 
 // This example is designed for use with eight QTR-1RC sensors or the eight sensors of a
 // QTR-8RC module.  These reflectance sensors should be connected to digital inputs 3 to 10.
@@ -31,7 +31,7 @@
 #define EMITTER_PIN   2     // emitter is controlled by digital pin 2
 
 // sensors 0 through 7 are connected to digital pins 3 through 10, respectively
-PololuQTRSensorsRC qtrrc((unsigned char[]) {3, 4, 5, 6, 7, 8, 9, 10},
+QTRSensorsRC qtrrc((unsigned char[]) {3, 4, 5, 6, 7, 8, 9, 10},
   NUM_SENSORS, TIMEOUT, EMITTER_PIN); 
 unsigned int sensorValues[NUM_SENSORS];
 
