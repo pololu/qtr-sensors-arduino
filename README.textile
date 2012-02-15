@@ -8,7 +8,7 @@ h2. Summary
 
 This is a library for the "Arduino":http://pololu.com/catalog/product/1616 that interfaces with the "Pololu QTR reflectance sensors":http://www.pololu.com/catalog/category/123 ("QTR-1A":http://www.pololu.com/catalog/product/958, "QTR-1RC":http://www.pololu.com/catalog/product/959, "QTR-8A":http://www.pololu.com/catalog/product/960, and "QTR-8RC":http://www.pololu.com/catalog/product/961).
 
-For documentation, please see the "user's guide":http://www.pololu.com/docs/0J19 for the library on Pololu's website. A "printable PDF":http://www.pololu.com/docs/pdf/0J20/pololu_avr_library.pdf of the guide is also available.
+For documentation, please see the "user's guide":http://www.pololu.com/docs/0J19 for the library on Pololu's website. A "printable PDF":http://www.pololu.com/docs/pdf/0J19/pololu_avr_library.pdf of the guide is also available.
 
 h2. Version History
 
