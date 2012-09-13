@@ -123,6 +123,7 @@ void QTRSensors::emittersOff()
 		return;
 	pinMode(_emitterPin, OUTPUT);
 	digitalWrite(_emitterPin, LOW);
+	delayMicroseconds(200);
 }
 
 void QTRSensors::emittersOn()
@@ -131,6 +132,7 @@ void QTRSensors::emittersOn()
 		return;
 	pinMode(_emitterPin, OUTPUT);
 	digitalWrite(_emitterPin, HIGH);
+	delayMicroseconds(200);
 }
 
 // Resets the calibration.
