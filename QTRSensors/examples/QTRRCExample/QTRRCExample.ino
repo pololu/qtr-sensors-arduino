@@ -7,7 +7,7 @@
 
 // The setup phase of this example calibrates the sensor for ten seconds and turns on
 // the pin 13 LED while calibration is going on.  During this phase, you should expose each
-// reflectance sensor ot the lightest and darkest readings they will encounter.  For
+// reflectance sensor to the lightest and darkest readings they will encounter.  For
 // example, if you are making a line follower, you should slide the sensors across the
 // line during the calibration phase so that each sensor can get a reading of how dark the
 // line is and how light the ground is.  Improper calibration will result in poor readings.
