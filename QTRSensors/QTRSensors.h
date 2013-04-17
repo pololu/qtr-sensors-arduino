@@ -170,7 +170,7 @@ class QTRSensorsRC : public QTRSensors
   
 	// if this constructor is used, the user must call init() before using
 	// the methods in this class
-	QTRSensorsRC() { }
+	QTRSensorsRC();
 	
 	// this constructor just calls init()
 	QTRSensorsRC(unsigned char* pins, unsigned char numSensors, 
@@ -225,7 +225,7 @@ class QTRSensorsAnalog : public QTRSensors
   
 	// if this constructor is used, the user must call init() before using
 	// the methods in this class
-	QTRSensorsAnalog() { }
+	QTRSensorsAnalog();
 	
 	// this constructor just calls init()
 	QTRSensorsAnalog(unsigned char* pins, 

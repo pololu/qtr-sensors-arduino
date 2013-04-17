@@ -372,11 +372,25 @@ int QTRSensors::readLine(unsigned int *sensor_values,
 
 
 
-// Derived RC class constructor
+// Derived RC class constructors
+QTRSensorsRC::QTRSensorsRC()
+{
+	calibratedMinimumOn = 0;
+	calibratedMaximumOn = 0;
+	calibratedMinimumOff = 0;
+	calibratedMaximumOff = 0;
+	_pins = 0;
+}
+
 QTRSensorsRC::QTRSensorsRC(unsigned char* pins,
   unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
 {
+	calibratedMinimumOn = 0;
+	calibratedMaximumOn = 0;
+	calibratedMinimumOff = 0;
+	calibratedMaximumOff = 0;
 	_pins = 0;
+
 	init(pins, numSensors, timeout, emitterPin);
 }
 
@@ -405,7 +419,7 @@ void QTRSensorsRC::init(unsigned char* pins,
 	unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
 {
 	QTRSensors::init(pins, numSensors, emitterPin, QTR_RC);
-	
+
 	_maxValue = timeout;
 }
 
@@ -454,12 +468,26 @@ void QTRSensorsRC::readPrivate(unsigned int *sensor_values)
 
 
 
-// Derived Analog class constructor
+// Derived Analog class constructors
+QTRSensorsAnalog::QTRSensorsAnalog()
+{
+	calibratedMinimumOn = 0;
+	calibratedMaximumOn = 0;
+	calibratedMinimumOff = 0;
+	calibratedMaximumOff = 0;
+	_pins = 0;
+}
+
 QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* pins,
   unsigned char numSensors, unsigned char numSamplesPerSensor,
   unsigned char emitterPin)
 {
+	calibratedMinimumOn = 0;
+	calibratedMaximumOn = 0;
+	calibratedMinimumOff = 0;
+	calibratedMaximumOff = 0;
 	_pins = 0;
+
 	init(pins, numSensors, numSamplesPerSensor, emitterPin);
 }
 
