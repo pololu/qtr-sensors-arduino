@@ -12,8 +12,8 @@
 // line during the calibration phase so that each sensor can get a reading of how dark the
 // line is and how light the ground is.  Improper calibration will result in poor readings.
 // If you want to skip the calibration phase, you can get the raw sensor readings
-// (pulse times from 0 to 2500 us) by calling qtra.read(sensorValues) instead of
-// qtra.readLine(sensorValues).
+// (pulse times from 0 to 2500 us) by calling qtrrc.read(sensorValues) instead of
+// qtrrc.readLine(sensorValues).
 
 // The main loop of the example reads the calibrated sensor values and uses them to
 // estimate the position of a line.  You can test this by taping a piece of 3/4" black
@@ -75,11 +75,9 @@ void loop()
   // from 0 to 5000, where 0 means directly under sensor 0 or the line was lost
   // past sensor 0, 1000 means directly under sensor 1, 200 means directly under sensor 2, etc.
   // Note: the values returned will be incorrect if the sensors have not been properly
-  // calibrated during the calibration phase.  To get raw sensor values, call:
-  //  qtra.read(sensorValues);
+  // calibrated during the calibration phase.  To get raw sensor values, set 'position' to:
+  //  qtrrc.read(sensorValues) instead of qtrrc.readLine(sensorValues)
   unsigned int position = qtrrc.readLine(sensorValues);
-  
-  //qtrrc.read(sensorValues);
 
   // print the sensor values as numbers from 0 to 9, where 0 means maximum reflectance and
   // 9 means minimum reflectance, followed by the line position

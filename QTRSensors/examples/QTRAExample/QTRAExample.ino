@@ -75,8 +75,8 @@ void loop()
   // from 0 to 5000, where 0 means directly under sensor 0 or the line was lost
   // past sensor 0, 1000 means directly under sensor 1, 200 means directly under sensor 2, etc.
   // Note: the values returned will be incorrect if the sensors have not been properly
-  // calibrated during the calibration phase.  To get raw sensor values, call:
-  //  qtra.read(sensorValues);
+  // calibrated during the calibration phase. To get raw sensor values, set variable 'position':
+  //  qtra.read(sensorValues) instead of qtra.readLine(sensorValues)
   unsigned int position = qtra.readLine(sensorValues);
 
   // print the sensor values as numbers from 0 to 9, where 0 means maximum reflectance and
