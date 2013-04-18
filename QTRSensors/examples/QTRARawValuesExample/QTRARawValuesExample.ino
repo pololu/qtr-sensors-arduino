@@ -2,8 +2,9 @@
 
 // This example is designed for use with six QTR-1A sensors or the first six sensors of a
 // QTR-8A module.  These reflectance sensors should be connected to analog inputs 0 to 5.
-// The emitter control pin can optionally be connected to digital pin 2, or you can leave
-// it disconnected and change the EMITTER_PIN #define below from 2 to QTR_NO_EMITTER_PIN.
+// The QTR-8A's emitter control pin (LEDON) can optionally be connected to digital pin 2, 
+// or you can leave it disconnected and change the EMITTER_PIN #define below from 2 to 
+// QTR_NO_EMITTER_PIN.
 
 // The main loop of the example reads the raw sensor values (uncalibrated).
 // You can test this by taping a piece of 3/4" black electrical tape to a piece of white 
@@ -33,15 +34,14 @@ void loop()
 {
   // read raw sensor values
   qtra.read(sensorValues);
+  
   // print the sensor values as numbers from 0 to 1023, where 0 means maximum reflectance and
-  // 1023 means minimum reflectance, followed by the line position
-  unsigned char i;
-  for (i = 0; i < NUM_SENSORS; i++)
+  // 1023 means minimum reflectance
+  for (unsigned char i = 0; i < NUM_SENSORS; i++)
   {
     Serial.print(sensorValues[i]);
     Serial.print('\t'); // tab to format the raw data into columns in the Serial monitor
   }
-  Serial.print("    ");
   Serial.println();
   
   delay(250);
