@@ -21,7 +21,7 @@
 // estimate the position of a line.  You can test this by taping a piece of 3/4" black
 // electrical tape to a piece of white paper and sliding the sensor across it.  It
 // prints the sensor values to the serial monitor as numbers from 0 (maximum reflectance) 
-// to 9 (minimum reflectance) followed by the estimated location of the line as a number
+// to 2500 (minimum reflectance) followed by the estimated location of the line as a number
 // from 0 to 5000.  1000 means the line is directly under sensor 1, 2000 means directly
 // under sensor 2, etc.  0 means the line is directly under sensor 0 or was last seen by
 // sensor 0 before being lost.  5000 means the line is directly under sensor 5 or was
@@ -81,8 +81,8 @@ void loop()
   // 9 means minimum reflectance, followed by the line position
   for (unsigned char i = 0; i < NUM_SENSORS; i++)
   {
-    Serial.print(sensorValues[i] * 10 / 1001);
-    Serial.print(' ');
+    Serial.print(sensorValues[i]);
+    Serial.print('\t');
   }
   //Serial.println(); // uncomment this line if you are using raw values
   Serial.println(position); // comment this line out if you are using raw values
