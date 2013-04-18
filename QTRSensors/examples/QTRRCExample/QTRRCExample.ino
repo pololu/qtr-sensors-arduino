@@ -75,7 +75,7 @@ void loop()
   // from 0 to 5000, where 0 means directly under sensor 0 or the line was lost
   // past sensor 0, 1000 means directly under sensor 1, 200 means directly under sensor 2, etc.
   // Note: the values returned will be incorrect if the sensors have not been properly
-  // calibrated during the calibration phase.  To get raw sensor values, set 'position' to:
+  // calibrated during the calibration phase.  To get raw sensor values, call:
   //  qtrrc.read(sensorValues) instead of qtrrc.readLine(sensorValues)
   unsigned int position = qtrrc.readLine(sensorValues);
 
