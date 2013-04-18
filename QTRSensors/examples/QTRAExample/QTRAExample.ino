@@ -73,23 +73,23 @@ void loop()
 {
   // read calibrated sensor values and obtain a measure of the line position
   // from 0 to 5000, where 0 means directly under sensor 0 or the line was lost
-  // past sensor 0, 1000 means directly under sensor 1, 200 means directly under sensor 2, etc.
+  // past sensor 0, 1000 means directly under sensor 1, 2000 means directly under sensor 2, etc.
   // Note: the values returned will be incorrect if the sensors have not been properly
   // calibrated during the calibration phase. To get raw sensor values, call:
-  //  qtra.read(sensorValues) instead of qtra.readLine(sensorValues)
-  //unsigned int position = qtra.readLine(sensorValues);
-  qtra.read(sensorValues);
+  //  qtra.read(sensorValues); instead of unsigned int position = qtra.readLine(sensorValues);
+  unsigned int position = qtra.readLine(sensorValues);
+  
   // print the sensor values as numbers from 0 to 9, where 0 means maximum reflectance and
   // 9 means minimum reflectance, followed by the line position
   unsigned char i;
   for (i = 0; i < NUM_SENSORS; i++)
   {
-    Serial.print(sensorValues[i]);
+    Serial.print(sensorValues[i] * 10 / 1001);
     Serial.print(' ');
   }
   Serial.print("    ");
-  Serial.println();
-  //Serial.println(position);
+  //Serial.println(); // uncomment this line if you are using raw values
+  Serial.println(position); // comment this line out if you are using raw values
   
   delay(250);
 }
