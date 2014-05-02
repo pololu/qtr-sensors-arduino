@@ -42,7 +42,7 @@
 
 // Base class data member initialization (called by derived class init())
 void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
-  unsigned char emitterPin, unsigned char type)
+  unsigned char emitterPin)
 {
     calibratedMinimumOn=0;
     calibratedMaximumOn=0;
@@ -68,7 +68,6 @@ void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
     }
 
     _emitterPin = emitterPin;
-    _type = type;
 }
 
 
@@ -88,20 +87,11 @@ void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
     if(readMode == QTR_EMITTERS_ON || readMode == QTR_EMITTERS_ON_AND_OFF)
         emittersOn();
 
-    if (_type == QTR_RC)
-    {
-        ((QTRSensorsRC*)this)->readPrivate(sensor_values);
-        emittersOff();
-        if(readMode == QTR_EMITTERS_ON_AND_OFF)
-            ((QTRSensorsRC*)this)->readPrivate(off_values);
-    }
-    else
-    {
-        ((QTRSensorsAnalog*)this)->readPrivate(sensor_values);
-        emittersOff();
-        if(readMode == QTR_EMITTERS_ON_AND_OFF)
-            ((QTRSensorsAnalog*)this)->readPrivate(off_values);
-    }
+    readPrivate(sensor_values);
+    emittersOff();
+
+    if(readMode == QTR_EMITTERS_ON_AND_OFF)
+        readPrivate(off_values);
 
     if(readMode == QTR_EMITTERS_ON_AND_OFF)
     {
@@ -418,7 +408,7 @@ QTRSensorsRC::QTRSensorsRC(unsigned char* pins,
 void QTRSensorsRC::init(unsigned char* pins,
     unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
 {
-    QTRSensors::init(pins, numSensors, emitterPin, QTR_RC);
+    QTRSensors::init(pins, numSensors, emitterPin);
 
     _maxValue = timeout;
 }
@@ -519,7 +509,7 @@ void QTRSensorsAnalog::init(unsigned char* pins,
     unsigned char numSensors, unsigned char numSamplesPerSensor,
     unsigned char emitterPin)
 {
-    QTRSensors::init(pins, numSensors, emitterPin, QTR_A);
+    QTRSensors::init(pins, numSensors, emitterPin);
 
     _numSamplesPerSensor = numSamplesPerSensor;
     _maxValue = 1023; // this is the maximum returned by the A/D conversion

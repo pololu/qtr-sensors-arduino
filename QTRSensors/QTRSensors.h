@@ -136,8 +136,7 @@ class QTRSensors
 
     };
 
-    void init(unsigned char *pins, unsigned char numSensors, unsigned char emitterPin,
-        unsigned char type);
+    void init(unsigned char *pins, unsigned char numSensors, unsigned char emitterPin);
 
     unsigned char *_pins;
     unsigned char _numSensors;
@@ -146,8 +145,7 @@ class QTRSensors
 
   private:
 
-    unsigned char _type;    // the type of the derived class (QTR_RC
-                            // or QTR_A)
+    virtual void readPrivate(unsigned int *sensor_values) = 0;
 
     // Handles the actual calibration. calibratedMinimum and
     // calibratedMaximum are pointers to the requested calibration
@@ -162,10 +160,6 @@ class QTRSensors
 // Object to be used for QTR-1RC and QTR-8RC sensors
 class QTRSensorsRC : public QTRSensors
 {
-    // allows the base QTRSensors class to access this class'
-    // readPrivate()
-    friend class QTRSensors;
-
   public:
 
     // if this constructor is used, the user must call init() before using
@@ -217,10 +211,6 @@ class QTRSensorsRC : public QTRSensors
 // Object to be used for QTR-1A and QTR-8A sensors
 class QTRSensorsAnalog : public QTRSensors
 {
-    // allows the base QTRSensors class to access this class
-    // readPrivate()
-    friend class QTRSensors;
-
   public:
 
     // if this constructor is used, the user must call init() before using
@@ -271,9 +261,6 @@ class QTRSensorsAnalog : public QTRSensors
     // 10-bit ADC average with higher values corresponding to lower
     // reflectance (e.g. a black surface or a void).
     void readPrivate(unsigned int *sensor_values);
-
-
-  private:
 
     unsigned char _numSamplesPerSensor;
 };
