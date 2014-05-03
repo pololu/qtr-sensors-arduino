@@ -60,10 +60,9 @@ class QTRSensors
     // If measureOffAndOn is true, measures the values with the
     // emitters on AND off and returns on - (timeout - off).  If this
     // value is less than zero, it returns zero.
-    // This method will call the appropriate derived class' readPrivate(), as
-    // determined by the _type data member.  Making this method virtual
-    // leads to compiler warnings, which is why this alternate approach was
-    // taken.
+    // This method will call the appropriate derived class's readPrivate(),
+    // which is defined as a virtual function in the base class and
+    // overridden by each derived class's own implementation.
     void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON);
 
     // Turn the IR LEDs off and on.  This is mainly for use by the
