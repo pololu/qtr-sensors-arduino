@@ -58,7 +58,7 @@ void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
     {
         _pins = (unsigned char*)malloc(sizeof(unsigned char)*_numSensors);
         if (_pins == 0)
-        return;
+            return;
     }
 
     unsigned char i;
@@ -86,15 +86,16 @@ void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
 
     if(readMode == QTR_EMITTERS_ON || readMode == QTR_EMITTERS_ON_AND_OFF)
         emittersOn();
+    else
+        emittersOff();
 
     readPrivate(sensor_values);
     emittersOff();
 
     if(readMode == QTR_EMITTERS_ON_AND_OFF)
+    {
         readPrivate(off_values);
 
-    if(readMode == QTR_EMITTERS_ON_AND_OFF)
-    {
         for(i=0;i<_numSensors;i++)
         {
             sensor_values[i] += _maxValue - off_values[i];
