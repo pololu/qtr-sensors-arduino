@@ -35,9 +35,6 @@
 #include "QTRSensors.h"
 #include <Arduino.h>
 
-#define QTR_RC      0
-#define QTR_A       1
-
 
 
 // Base class data member initialization (called by derived class init())
