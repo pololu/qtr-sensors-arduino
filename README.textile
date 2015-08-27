@@ -6,7 +6,7 @@ Release Date: 2014-05-02
 
 h2. Summary
 
-This is a library for the "Arduino":http://www.pololu.com/catalog/product/2191 that interfaces with the "Pololu QTR reflectance sensors":http://www.pololu.com/catalog/category/123 ("QTR-1A":http://www.pololu.com/catalog/product/958, "QTR-1RC":http://www.pololu.com/catalog/product/959, "QTR-8A":http://www.pololu.com/catalog/product/960, and "QTR-8RC":http://www.pololu.com/catalog/product/961).
+This is a library for the "Arduino":http://www.pololu.com/catalog/product/2191 that interfaces with the "Pololu QTR reflectance sensors":http://www.pololu.com/catalog/category/123 ("QTR-1A":http://www.pololu.com/catalog/product/2458, "QTR-1RC":http://www.pololu.com/catalog/product/2459, "QTR-8A":http://www.pololu.com/catalog/product/960, and "QTR-8RC":http://www.pololu.com/catalog/product/961).
 
 For documentation, please see the "user's guide":http://www.pololu.com/docs/0J19 for the library on Pololu's website.
 
