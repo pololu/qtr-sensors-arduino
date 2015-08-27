@@ -6,7 +6,7 @@ Release Date: 2014-05-02
 
 h2. Summary
 
-This is a library for the "Arduino":http://www.pololu.com/catalog/product/2191 that interfaces with the "Pololu QTR reflectance sensors":http://www.pololu.com/catalog/category/123.
+This is a library for an "Arduino":http://www.pololu.com/catalog/product/2191 or "A-Star 32U4 controller":http://preview/category/149/a-star-programmable-controllers that interfaces with the "Pololu QTR reflectance sensors":http://www.pololu.com/catalog/category/123.
 
 For documentation, please see the "user's guide":http://www.pololu.com/docs/0J19 for the library on Pololu's website.
 
