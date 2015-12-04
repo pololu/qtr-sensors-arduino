@@ -46,7 +46,7 @@ void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
     calibratedMinimumOff=0;
     calibratedMaximumOff=0;
 
-	_lastValue=0; // assume initially that the line is left.
+    _lastValue=0; // assume initially that the line is left.
 
     if (numSensors > QTR_MAX_SENSORS)
         _numSensors = QTR_MAX_SENSORS;
