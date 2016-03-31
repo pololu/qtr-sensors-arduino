@@ -431,8 +431,8 @@ void QTRSensorsRC::readPrivate(unsigned int *sensor_values)
     for(i = 0; i < _numSensors; i++)
     {
         sensor_values[i] = _maxValue;
-        digitalWrite(_pins[i], HIGH);   // make sensor line an output
-        pinMode(_pins[i], OUTPUT);      // drive sensor line high
+        pinMode(_pins[i], OUTPUT);      // make sensor line an output
+        digitalWrite(_pins[i], HIGH);   // drive sensor line high
     }
 
     delayMicroseconds(10);              // charge lines for 10 us
