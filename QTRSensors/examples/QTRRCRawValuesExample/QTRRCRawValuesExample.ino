@@ -36,7 +36,7 @@ void loop()
   qtrrc.read(sensorValues);
 
   // print the sensor values as numbers from 0 to 2500, where 0 means maximum reflectance and
-  // 1023 means minimum reflectance
+  // 2500 means minimum reflectance
   for (unsigned char i = 0; i < NUM_SENSORS; i++)
   {
     Serial.print(sensorValues[i]);
