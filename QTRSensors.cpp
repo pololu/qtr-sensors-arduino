@@ -46,6 +46,8 @@ void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
     calibratedMinimumOff=0;
     calibratedMaximumOff=0;
 
+    _lastValue=0; // assume initially that the line is left.
+
     if (numSensors > QTR_MAX_SENSORS)
         _numSensors = QTR_MAX_SENSORS;
     else
@@ -317,7 +319,6 @@ int QTRSensors::readLine(unsigned int *sensor_values,
     unsigned long avg; // this is for the weighted total, which is long
                        // before division
     unsigned int sum; // this is for the denominator which is <= 64000
-    static int last_value=0; // assume initially that the line is left.
 
     readCalibrated(sensor_values, readMode);
 
@@ -344,7 +345,7 @@ int QTRSensors::readLine(unsigned int *sensor_values,
     if(!on_line)
     {
         // If it last read to the left of center, return 0.
-        if(last_value < (_numSensors-1)*1000/2)
+        if(_lastValue < (_numSensors-1)*1000/2)
             return 0;
 
         // If it last read to the right of center, return the max.
@@ -353,9 +354,9 @@ int QTRSensors::readLine(unsigned int *sensor_values,
 
     }
 
-    last_value = avg/sum;
+    _lastValue = avg/sum;
 
-    return last_value;
+    return _lastValue;
 }
 
 

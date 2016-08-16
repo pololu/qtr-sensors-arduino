@@ -141,6 +141,7 @@ class QTRSensors
     unsigned char _numSensors;
     unsigned char _emitterPin;
     unsigned int _maxValue; // the maximum value returned by this function
+    int _lastValue;
 
   private:
 
