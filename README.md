@@ -57,7 +57,7 @@ For documentation, please see the
 Pololu's website.
 
 ## Version history
-* 3.0.0 (2016-08-16): Updated library to work with the Arduino Library manager.
+* 3.0.0 (2016-08-16): Updated library to work with the Arduino Library Manager.
 * 2.1.1 (2014-05-02): Minor improvements to @read()@ behavior and whitespace cleanup.
 * 2.1.0 (2013-04-18): Improved existing examples and added two new examples for printing raw values.
 * 2.0.2 (2013-04-17): Made constructors initialize pointers to avoid possible problems.
