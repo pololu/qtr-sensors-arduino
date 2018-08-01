@@ -16,7 +16,7 @@ QTRSensors	KEYWORD1
 
 read	KEYWORD2
 emittersOff	KEYWORD2
-emittersOn	KEYWORD2	
+emittersOn	KEYWORD2
 calibrate	KEYWORD2
 readCalibrated	KEYWORD2
 readLine	KEYWORD2

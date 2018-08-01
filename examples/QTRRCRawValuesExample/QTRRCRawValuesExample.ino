@@ -2,13 +2,13 @@
 
 // This example is designed for use with eight QTR-1RC sensors or the eight sensors of a
 // QTR-8RC module.  These reflectance sensors should be connected to digital inputs 3 to 10.
-// The QTR-8RC's emitter control pin (LEDON) can optionally be connected to digital pin 2, 
-// or you can leave it disconnected and change the EMITTER_PIN #define below from 2 to 
+// The QTR-8RC's emitter control pin (LEDON) can optionally be connected to digital pin 2,
+// or you can leave it disconnected and change the EMITTER_PIN #define below from 2 to
 // QTR_NO_EMITTER_PIN.
 
 // The main loop of the example reads the raw sensor values (uncalibrated).
-// You can test this by taping a piece of 3/4" black electrical tape to a piece of white 
-// paper and sliding the sensor across it.  It prints the sensor values to the serial 
+// You can test this by taping a piece of 3/4" black electrical tape to a piece of white
+// paper and sliding the sensor across it.  It prints the sensor values to the serial
 // monitor as numbers from 0 (maximum reflectance) to 2500 (minimum reflectance).
 
 
@@ -18,7 +18,7 @@
 
 // sensors 0 through 7 are connected to digital pins 3 through 10, respectively
 QTRSensorsRC qtrrc((unsigned char[]) {3, 4, 5, 6, 7, 8, 9, 10},
-  NUM_SENSORS, TIMEOUT, EMITTER_PIN); 
+  NUM_SENSORS, TIMEOUT, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
 
 
@@ -43,6 +43,6 @@ void loop()
     Serial.print('\t'); // tab to format the raw data into columns in the Serial monitor
   }
   Serial.println();
-  
+
   delay(250);
 }
