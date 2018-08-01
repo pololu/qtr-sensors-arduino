@@ -40,7 +40,7 @@
 
 #define QTR_NO_EMITTER_PIN  255
 
-#define QTR_MAX_SENSORS 16
+#define QTR_MAX_SENSORS 31
 
 // This class cannot be instantiated directly (it has no constructor).
 // Instead, you should instantiate one of its two derived classes (either the
@@ -69,8 +69,8 @@ class QTRSensors
     // read method, and calling these functions before or
     // after the reading the sensors will have no effect on the
     // readings, but you may wish to use these for testing purposes.
-    void emittersOff();
-    void emittersOn();
+    virtual void emittersOff();
+    virtual void emittersOn();
 
     // Reads the sensors for calibration.  The sensor values are
     // not returned; instead, the maximum and minimum values found
@@ -157,8 +157,32 @@ class QTRSensors
 
 
 
+class QTRDimmable : virtual public QTRSensors
+{
+  public:
+
+    void setDimmingLevel(unsigned char dimmingLevel);
+    unsigned char getDimmingLevel() { return _dimmingLevel; }
+
+    void emittersOff();
+    void emittersOn();
+
+  protected:
+
+    QTRDimmable()
+    {
+        _dimmingLevel = 0;
+    };
+
+  private:
+
+    unsigned char _dimmingLevel;
+};
+
+
+
 // Object to be used for QTR-1RC and QTR-8RC sensors
-class QTRSensorsRC : public QTRSensors
+class QTRSensorsRC : virtual public QTRSensors
 {
   public:
 
@@ -168,7 +192,7 @@ class QTRSensorsRC : public QTRSensors
 
     // this constructor just calls init()
     QTRSensorsRC(unsigned char* pins, unsigned char numSensors,
-          unsigned int timeout = 4000, unsigned char emitterPin = 255);
+          unsigned int timeout = 4000, unsigned char emitterPin = QTR_NO_EMITTER_PIN);
 
     // The array 'pins' contains the Arduino pin number for each sensor.
 
@@ -209,7 +233,7 @@ class QTRSensorsRC : public QTRSensors
 
 
 // Object to be used for QTR-1A and QTR-8A sensors
-class QTRSensorsAnalog : public QTRSensors
+class QTRSensorsAnalog : virtual public QTRSensors
 {
   public:
 
@@ -218,9 +242,9 @@ class QTRSensorsAnalog : public QTRSensors
     QTRSensorsAnalog();
 
     // this constructor just calls init()
-    QTRSensorsAnalog(unsigned char* pins,
+    QTRSensorsAnalog(unsigned char* analogPins,
         unsigned char numSensors, unsigned char numSamplesPerSensor = 4,
-        unsigned char emitterPin = 255);
+        unsigned char emitterPin = QTR_NO_EMITTER_PIN);
 
     // the array 'pins' contains the Arduino analog pin assignment for each
     // sensor.  For example, if pins is {0, 1, 7}, sensor 1 is on
@@ -265,5 +289,38 @@ class QTRSensorsAnalog : public QTRSensors
     unsigned char _numSamplesPerSensor;
 };
 
+
+
+class QTRDimmableRC: public QTRDimmable, public QTRSensorsRC
+{
+  public:
+
+    using QTRSensorsRC::QTRSensorsRC;
+
+    QTRDimmableRC(unsigned char* pins,
+        unsigned char numSensors, unsigned int timeout,
+        unsigned char oddEmitterPin, unsigned char evenEmitterPin);
+
+    void init(unsigned char* pins,
+        unsigned char numSensors, unsigned int timeout,
+        unsigned char oddEmitterPin, unsigned char evenEmitterPin);
+};
+
+
+
+class QTRDimmableAnalog: public QTRDimmable, public QTRSensorsAnalog
+{
+  public:
+
+    using QTRSensorsAnalog::QTRSensorsAnalog;
+
+    QTRDimmableAnalog(unsigned char* analogPins,
+        unsigned char numSensors, unsigned char numSamplesPerSensor,
+        unsigned char oddEmitterPin, unsigned char evenEmitterPin);
+
+    void init(unsigned char* analogPins,
+        unsigned char numSensors, unsigned char numSamplesPerSensor,
+        unsigned char oddEmitterPin, unsigned char evenEmitterPin);
+};
 
 #endif

@@ -361,6 +361,56 @@ int QTRSensors::readLine(unsigned int *sensor_values,
 
 
 
+void QTRDimmable::setDimmingLevel(unsigned char dimmingLevel)
+{
+    if (dimmingLevel > 31)
+    {
+        dimmingLevel = 31;
+    }
+    _dimmingLevel = dimmingLevel;
+}
+
+
+// Turn the IR LEDs off and on.  This is mainly for use by the
+// read method, and calling these functions before or
+// after the reading the sensors will have no effect on the
+// readings, but you may wish to use these for testing purposes.
+void QTRDimmable::emittersOff()
+{
+    if (_emitterPin == QTR_NO_EMITTER_PIN)
+        return;
+    pinMode(_emitterPin, OUTPUT);
+    digitalWrite(_emitterPin, LOW);
+    delayMicroseconds(1200); // minimum 1 ms; add some margin
+}
+
+void QTRDimmable::emittersOn()
+{
+    if (_emitterPin == QTR_NO_EMITTER_PIN)
+        return;
+    pinMode(_emitterPin, OUTPUT);
+    digitalWrite(_emitterPin, HIGH);
+    unsigned int ctrlHighTime = micros();
+
+    noInterrupts();
+    for (unsigned char i = 0; i < _dimmingLevel; i++)
+    {
+        delayMicroseconds(1);
+        digitalWrite(_emitterPin, LOW);
+        delayMicroseconds(1);
+        digitalWrite(_emitterPin, HIGH);
+    }
+    interrupts();
+
+    // Make sure it's been at least 300 us since the emitter pin first went high
+    // before returning.
+    while ((unsigned int)(micros() - ctrlHighTime) < 300)
+    {
+        delayMicroseconds(10);
+    }
+}
+
+
 // Derived RC class constructors
 QTRSensorsRC::QTRSensorsRC()
 {
@@ -467,7 +517,7 @@ QTRSensorsAnalog::QTRSensorsAnalog()
     _pins = 0;
 }
 
-QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* pins,
+QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* analogPins,
   unsigned char numSensors, unsigned char numSamplesPerSensor,
   unsigned char emitterPin)
 {
@@ -477,7 +527,7 @@ QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* pins,
     calibratedMaximumOff = 0;
     _pins = 0;
 
-    init(pins, numSensors, numSamplesPerSensor, emitterPin);
+    init(analogPins, numSensors, numSamplesPerSensor, emitterPin);
 }
 
 
@@ -504,11 +554,11 @@ QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* pins,
 // modules.  If you are using a 1RC (i.e. if there is no emitter pin),
 // or if you just want the emitters on all the time and don't want to
 // use an I/O pin to control it, use a value of 255 (QTR_NO_EMITTER_PIN).
-void QTRSensorsAnalog::init(unsigned char* pins,
+void QTRSensorsAnalog::init(unsigned char* analogPins,
     unsigned char numSensors, unsigned char numSamplesPerSensor,
     unsigned char emitterPin)
 {
-    QTRSensors::init(pins, numSensors, emitterPin);
+    QTRSensors::init(analogPins, numSensors, emitterPin);
 
     _numSamplesPerSensor = numSamplesPerSensor;
     _maxValue = 1023; // this is the maximum returned by the A/D conversion
