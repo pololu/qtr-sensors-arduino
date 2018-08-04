@@ -36,7 +36,6 @@
 #include <Arduino.h>
 
 
-
 // Base class data member initialization (called by derived class init())
 void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
   unsigned char emitterPin)
@@ -80,19 +79,21 @@ void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
 // surface or a void).
 void QTRSensors::read(unsigned int *sensor_values, unsigned char readMode)
 {
-    unsigned int off_values[QTR_MAX_SENSORS];
     unsigned char i;
 
-    if(readMode == QTR_EMITTERS_ON || readMode == QTR_EMITTERS_ON_AND_OFF)
+    if (readMode == QTR_EMITTERS_ON || readMode == QTR_EMITTERS_ON_AND_OFF)
         emittersOn();
-    else
+    else if (readMode == QTR_EMITTERS_OFF)
         emittersOff();
 
     readPrivate(sensor_values);
-    emittersOff();
 
-    if(readMode == QTR_EMITTERS_ON_AND_OFF)
+    if (readMode != QTR_EMITTERS_MANUAL)
+        emittersOff();
+
+    if (readMode == QTR_EMITTERS_ON_AND_OFF)
     {
+        unsigned int off_values[QTR_MAX_SENSORS];
         readPrivate(off_values);
 
         for(i=0;i<_numSensors;i++)
@@ -360,51 +361,160 @@ int QTRSensors::readLine(unsigned int *sensor_values,
 }
 
 
-
-void QTRDimmable::setDimmingLevel(unsigned char dimmingLevel)
+void QTRDimmable::init(unsigned char *pins, unsigned char numSensors,
+  unsigned char emitterPin)
 {
-    if (dimmingLevel > 31)
-    {
-        dimmingLevel = 31;
-    }
-    _dimmingLevel = dimmingLevel;
+    QTRSensors::init(pins, numSensors, emitterPin);
+    _evenEmitterPin = QTR_NO_EMITTER_PIN;
+}
+
+void QTRDimmable::init(unsigned char *pins, unsigned char numSensors,
+  unsigned char oddEmitterPin, unsigned char evenEmitterPin)
+{
+    QTRSensors::init(pins, numSensors, oddEmitterPin);
+    _evenEmitterPin = evenEmitterPin;
 }
 
 
-// Turn the IR LEDs off and on.  This is mainly for use by the
-// read method, and calling these functions before or
-// after the reading the sensors will have no effect on the
-// readings, but you may wish to use these for testing purposes.
+void QTRDimmable::read(unsigned int *sensor_values, unsigned char readMode, unsigned char dimmingLevel)
+{
+    if (readMode == QTR_EMITTERS_ODD_EVEN || readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
+    {
+        emitterBankSelect(QTR_BANK_ODD, dimmingLevel);
+
+        // Read the odd-numbered sensors.
+        // (readPrivate takes a 0-based array index, so start = 0 to start with
+        // the first sensor)
+        readPrivate(sensor_values, 2, 0);
+
+        emitterBankSelect(QTR_BANK_EVEN, dimmingLevel);
+
+        // Read the even-numbered sensors.
+        // (readPrivate takes a 0-based array index, so start = 1 to start with
+        // the second sensor)
+        readPrivate(sensor_values, 2, 1);
+    }
+    else
+    {
+        if (readMode == QTR_EMITTERS_ON || readMode == QTR_EMITTERS_ON_AND_OFF)
+            emittersOn(_emitterPin, dimmingLevel);
+        else if (readMode == QTR_EMITTERS_OFF)
+            emittersOff();
+
+        readPrivate(sensor_values);
+    }
+    if (readMode != QTR_EMITTERS_MANUAL)
+        emittersOff();
+
+    if (readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
+    {
+        unsigned char i;
+
+        unsigned int off_values[QTR_MAX_SENSORS];
+        readPrivate(off_values);
+
+        for(i=0;i<_numSensors;i++)
+        {
+            sensor_values[i] += _maxValue - off_values[i];
+        }
+    }
+}
+
+
 void QTRDimmable::emittersOff()
 {
-    if (_emitterPin == QTR_NO_EMITTER_PIN)
+    if (_evenEmitterPin != QTR_NO_EMITTER_PIN)
+    {
+        // Stop driving even emitter ctrl pin
+        // and let odd pin control all emitters
+        pinMode (_evenEmitterPin, INPUT);
+    }
+    emittersOff(_emitterPin);
+}
+
+void QTRDimmable::emittersOff(unsigned char emitterPin, bool wait)
+{
+    if (emitterPin == QTR_NO_EMITTER_PIN)
         return;
-    pinMode(_emitterPin, OUTPUT);
-    digitalWrite(_emitterPin, LOW);
-    delayMicroseconds(1200); // minimum 1 ms; add some margin
+    pinMode(emitterPin, OUTPUT);
+    digitalWrite(emitterPin, LOW);
+
+    if (wait)
+    {
+        delayMicroseconds(1200); // minimum 1 ms; add some margin
+    }
 }
 
 void QTRDimmable::emittersOn()
 {
-    if (_emitterPin == QTR_NO_EMITTER_PIN)
+    if (_evenEmitterPin != QTR_NO_EMITTER_PIN)
+    {
+        // Stop driving even emitter ctrl pin
+        // and let odd pin control all emitters
+        pinMode (_evenEmitterPin, INPUT);
+    }
+    emittersOn(_emitterPin);
+}
+
+
+void QTRDimmable::emittersOn(unsigned char emitterPin, unsigned char dimmingLevel, bool wait)
+{
+    if (emitterPin == QTR_NO_EMITTER_PIN)
         return;
-    pinMode(_emitterPin, OUTPUT);
-    digitalWrite(_emitterPin, HIGH);
-    unsigned int ctrlHighTime = micros();
+
+    if (dimmingLevel > 31)
+    {
+        dimmingLevel = 31;
+    }
+
+    pinMode(emitterPin, OUTPUT);
+    digitalWrite(emitterPin, HIGH);
+    unsigned int turnOnStart = micros();
 
     noInterrupts();
-    for (unsigned char i = 0; i < _dimmingLevel; i++)
+    for (unsigned char i = 0; i < dimmingLevel; i++)
     {
         delayMicroseconds(1);
-        digitalWrite(_emitterPin, LOW);
+        digitalWrite(emitterPin, LOW);
         delayMicroseconds(1);
-        digitalWrite(_emitterPin, HIGH);
+        digitalWrite(emitterPin, HIGH);
     }
     interrupts();
 
-    // Make sure it's been at least 300 us since the emitter pin first went high
-    // before returning.
-    while ((unsigned int)(micros() - ctrlHighTime) < 300)
+    if (wait)
+    {
+        // Make sure it's been at least 300 us since the emitter pin first went
+        // high before returning.
+        while ((unsigned int)(micros() - turnOnStart) < 300)
+        {
+            delayMicroseconds(10);
+        }
+    }
+}
+
+void QTRDimmable::emitterBankSelect(unsigned char bank, unsigned char dimmingLevel)
+{
+    unsigned char offPin, onPin;
+
+    if (bank == QTR_BANK_ODD)
+    {
+        offPin = _evenEmitterPin;
+        onPin = _emitterPin;
+    }
+    else
+    {
+        offPin = _emitterPin;
+        onPin = _evenEmitterPin;
+    }
+
+    emittersOff(offPin, false);
+    unsigned int turnOffStart = micros();
+
+    emittersOn(onPin, dimmingLevel, false);
+
+    // Make sure it's been at least 1200 us since the first bank was turned off
+    // before returning. (minimum 1 ms; add some margin)
+    while ((unsigned int)(micros() - turnOffStart) < 1200)
     {
         delayMicroseconds(10);
     }
@@ -471,14 +581,14 @@ void QTRSensorsRC::init(unsigned char* pins,
 // ...
 // The values returned are in microseconds and range from 0 to
 // timeout (as specified in the constructor).
-void QTRSensorsRC::readPrivate(unsigned int *sensor_values)
+void QTRSensorsRC::readPrivate(unsigned int *sensor_values, unsigned char pitch, unsigned char start)
 {
     unsigned char i;
 
     if (_pins == 0)
         return;
 
-    for(i = 0; i < _numSensors; i++)
+    for(i = start; i < _numSensors; i += pitch)
     {
         sensor_values[i] = _maxValue;
         pinMode(_pins[i], OUTPUT);      // make sensor line an output (drives low briefly, but doesn't matter)
@@ -487,7 +597,7 @@ void QTRSensorsRC::readPrivate(unsigned int *sensor_values)
 
     delayMicroseconds(10);              // charge lines for 10 us
 
-    for(i = 0; i < _numSensors; i++)
+    for(i = start; i < _numSensors; i += pitch)
     {
         pinMode(_pins[i], INPUT);       // make sensor line an input
         digitalWrite(_pins[i], LOW);        // important: disable internal pull-up!
@@ -497,14 +607,13 @@ void QTRSensorsRC::readPrivate(unsigned int *sensor_values)
     while (micros() - startTime < _maxValue)
     {
         unsigned int time = micros() - startTime;
-        for (i = 0; i < _numSensors; i++)
+        for (i = start; i < _numSensors; i += pitch)
         {
             if (digitalRead(_pins[i]) == LOW && time < sensor_values[i])
                 sensor_values[i] = time;
         }
     }
 }
-
 
 
 // Derived Analog class constructors
@@ -573,7 +682,7 @@ void QTRSensorsAnalog::init(unsigned char* analogPins,
 // The values returned are a measure of the reflectance in terms of a
 // 10-bit ADC average with higher values corresponding to lower
 // reflectance (e.g. a black surface or a void).
-void QTRSensorsAnalog::readPrivate(unsigned int *sensor_values)
+void QTRSensorsAnalog::readPrivate(unsigned int *sensor_values, unsigned char pitch, unsigned char start)
 {
     unsigned char i, j;
 
@@ -581,22 +690,69 @@ void QTRSensorsAnalog::readPrivate(unsigned int *sensor_values)
         return;
 
     // reset the values
-    for(i = 0; i < _numSensors; i++)
+    for(i = start; i < _numSensors; i += pitch)
         sensor_values[i] = 0;
 
     for (j = 0; j < _numSamplesPerSensor; j++)
     {
-        for (i = 0; i < _numSensors; i++)
+        for (i = start; i < _numSensors; i += pitch)
         {
             sensor_values[i] += analogRead(_pins[i]);   // add the conversion result
         }
     }
 
     // get the rounded average of the readings for each sensor
-    for (i = 0; i < _numSensors; i++)
+    for (i = start; i < _numSensors; i += pitch)
         sensor_values[i] = (sensor_values[i] + (_numSamplesPerSensor >> 1)) /
             _numSamplesPerSensor;
 }
+
+
+QTRDimmableRC::QTRDimmableRC(unsigned char* pins,
+  unsigned char numSensors, unsigned int timeout,
+  unsigned char oddEmitterPin, unsigned char evenEmitterPin)
+{
+    calibratedMinimumOn = 0;
+    calibratedMaximumOn = 0;
+    calibratedMinimumOff = 0;
+    calibratedMaximumOff = 0;
+    _pins = 0;
+
+    init(pins, numSensors, timeout, oddEmitterPin, evenEmitterPin);
+}
+
+void QTRDimmableRC::init(unsigned char* pins,
+    unsigned char numSensors, unsigned int timeout,
+    unsigned char oddEmitterPin, unsigned char evenEmitterPin)
+{
+    QTRDimmable::init(pins, numSensors, oddEmitterPin, evenEmitterPin);
+
+    _maxValue = timeout;
+}
+
+QTRDimmableAnalog::QTRDimmableAnalog(unsigned char* analogPins,
+  unsigned char numSensors, unsigned char numSamplesPerSensor,
+  unsigned char oddEmitterPin, unsigned char evenEmitterPin)
+{
+    calibratedMinimumOn = 0;
+    calibratedMaximumOn = 0;
+    calibratedMinimumOff = 0;
+    calibratedMaximumOff = 0;
+    _pins = 0;
+
+    init(analogPins, numSensors, numSamplesPerSensor, oddEmitterPin, evenEmitterPin);
+}
+
+void QTRDimmableAnalog::init(unsigned char* analogPins,
+    unsigned char numSensors, unsigned char numSamplesPerSensor,
+    unsigned char oddEmitterPin, unsigned char evenEmitterPin)
+{
+    QTRDimmable::init(analogPins, numSensors, oddEmitterPin, evenEmitterPin);
+
+    _numSamplesPerSensor = numSamplesPerSensor;
+    _maxValue = 1023; // this is the maximum returned by the A/D conversion
+}
+
 
 // the destructor frees up allocated memory
 QTRSensors::~QTRSensors()

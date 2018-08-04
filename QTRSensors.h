@@ -34,11 +34,17 @@
 #ifndef QTRSensors_h
 #define QTRSensors_h
 
-#define QTR_EMITTERS_OFF 0
-#define QTR_EMITTERS_ON 1
-#define QTR_EMITTERS_ON_AND_OFF 2
+#define QTR_EMITTERS_OFF              0
+#define QTR_EMITTERS_ON               1
+#define QTR_EMITTERS_ON_AND_OFF       2
+#define QTR_EMITTERS_ODD_EVEN         3
+#define QTR_EMITTERS_ODD_EVEN_AND_OFF 4
+#define QTR_EMITTERS_MANUAL           5
 
 #define QTR_NO_EMITTER_PIN  255
+
+#define QTR_BANK_ODD  1
+#define QTR_BANK_EVEN 2
 
 #define QTR_MAX_SENSORS 31
 
@@ -63,7 +69,7 @@ class QTRSensors
     // This method will call the appropriate derived class's readPrivate(),
     // which is defined as a virtual function in the base class and
     // overridden by each derived class's own implementation.
-    void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON);
+    virtual void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON);
 
     // Turn the IR LEDs off and on.  This is mainly for use by the
     // read method, and calling these functions before or
@@ -135,7 +141,9 @@ class QTRSensors
 
     };
 
-    void init(unsigned char *pins, unsigned char numSensors, unsigned char emitterPin);
+    virtual void init(unsigned char *pins, unsigned char numSensors, unsigned char emitterPin);
+
+    virtual void readPrivate(unsigned int *sensor_values, unsigned char pitch = 1, unsigned char start = 0) = 0;
 
     unsigned char *_pins;
     unsigned char _numSensors;
@@ -144,8 +152,6 @@ class QTRSensors
     int _lastValue;
 
   private:
-
-    virtual void readPrivate(unsigned int *sensor_values) = 0;
 
     // Handles the actual calibration. calibratedMinimum and
     // calibratedMaximum are pointers to the requested calibration
@@ -156,29 +162,33 @@ class QTRSensors
 };
 
 
-
 class QTRDimmable : virtual public QTRSensors
 {
   public:
 
-    void setDimmingLevel(unsigned char dimmingLevel);
-    unsigned char getDimmingLevel() { return _dimmingLevel; }
+    void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON) override
+    {
+        read(sensor_values, readMode, 0);
+    }
+    void read(unsigned int *sensor_values, unsigned char readMode, unsigned char dimmingLevel);
 
-    void emittersOff();
-    void emittersOn();
+    void emittersOff() override;
+    void emittersOff(unsigned char emitterPin, bool wait = true);
+
+    void emittersOn() override;
+    void emittersOn(unsigned char emitterPin, unsigned char dimmingLevel = 0, bool wait = true);
+
+    void emitterBankSelect(unsigned char bank, unsigned char dimmingLevel = 0);
 
   protected:
 
-    QTRDimmable()
-    {
-        _dimmingLevel = 0;
-    };
+    void init(unsigned char *pins, unsigned char numSensors,
+          unsigned char emitterPin) override;
+    void init(unsigned char *pins, unsigned char numSensors,
+          unsigned char oddEmitterPin, unsigned char evenEmitterPin);
 
-  private:
-
-    unsigned char _dimmingLevel;
+    unsigned char _evenEmitterPin; // odd pin is stored in _emitterPin
 };
-
 
 
 // Object to be used for QTR-1RC and QTR-8RC sensors
@@ -218,7 +228,6 @@ class QTRSensorsRC : virtual public QTRSensors
           unsigned int timeout = 2000, unsigned char emitterPin = QTR_NO_EMITTER_PIN);
 
 
-
   private:
 
     // Reads the sensor values into an array. There *MUST* be space
@@ -227,9 +236,8 @@ class QTRSensorsRC : virtual public QTRSensors
     // unsigned int sensor_values[8];
     // sensors.read(sensor_values);
     // The values returned are a measure of the reflectance in microseconds.
-    void readPrivate(unsigned int *sensor_values);
+    void readPrivate(unsigned int *sensor_values, unsigned char pitch = 1, unsigned char start = 0) override;
 };
-
 
 
 // Object to be used for QTR-1A and QTR-8A sensors
@@ -272,7 +280,9 @@ class QTRSensorsAnalog : virtual public QTRSensors
     void init(unsigned char* analogPins, unsigned char numSensors,
         unsigned char numSamplesPerSensor = 4, unsigned char emitterPin = QTR_NO_EMITTER_PIN);
 
+  protected:
 
+    unsigned char _numSamplesPerSensor;
 
   private:
 
@@ -284,11 +294,8 @@ class QTRSensorsAnalog : virtual public QTRSensors
     // The values returned are a measure of the reflectance in terms of a
     // 10-bit ADC average with higher values corresponding to lower
     // reflectance (e.g. a black surface or a void).
-    void readPrivate(unsigned int *sensor_values);
-
-    unsigned char _numSamplesPerSensor;
+    void readPrivate(unsigned int *sensor_values, unsigned char pitch = 1, unsigned char start = 0) override;
 };
-
 
 
 class QTRDimmableRC: public QTRDimmable, public QTRSensorsRC
@@ -305,7 +312,6 @@ class QTRDimmableRC: public QTRDimmable, public QTRSensorsRC
         unsigned char numSensors, unsigned int timeout,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
 };
-
 
 
 class QTRDimmableAnalog: public QTRDimmable, public QTRSensorsAnalog
