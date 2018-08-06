@@ -432,12 +432,24 @@ void QTRDimmable::emittersOff()
     emittersOff(_emitterPin);
 }
 
-void QTRDimmable::emittersOff(unsigned char emitterPin, bool wait)
+void QTRDimmable::emittersOff(unsigned char bank, bool wait)
 {
-    if (emitterPin == QTR_NO_EMITTER_PIN)
+    unsigned char ePin;
+
+    if (bank == QTR_BANK_ODD)
+    {
+        ePin = _emitterPin;
+    }
+    else
+    {
+        ePin = _evenEmitterPin;
+    }
+
+    if (ePin == QTR_NO_EMITTER_PIN)
         return;
-    pinMode(emitterPin, OUTPUT);
-    digitalWrite(emitterPin, LOW);
+
+    pinMode(ePin, OUTPUT);
+    digitalWrite(ePin, LOW);
 
     if (wait)
     {
@@ -457,9 +469,20 @@ void QTRDimmable::emittersOn()
 }
 
 
-void QTRDimmable::emittersOn(unsigned char emitterPin, unsigned char dimmingLevel, bool wait)
+void QTRDimmable::emittersOn(unsigned char bank, unsigned char dimmingLevel, bool wait)
 {
-    if (emitterPin == QTR_NO_EMITTER_PIN)
+    unsigned char ePin;
+
+    if (bank == QTR_BANK_ODD)
+    {
+        ePin = _emitterPin;
+    }
+    else
+    {
+        ePin = _evenEmitterPin;
+    }
+
+    if (ePin == QTR_NO_EMITTER_PIN)
         return;
 
     if (dimmingLevel > 31)
@@ -467,17 +490,17 @@ void QTRDimmable::emittersOn(unsigned char emitterPin, unsigned char dimmingLeve
         dimmingLevel = 31;
     }
 
-    pinMode(emitterPin, OUTPUT);
-    digitalWrite(emitterPin, HIGH);
+    pinMode(ePin, OUTPUT);
+    digitalWrite(ePin, HIGH);
     unsigned int turnOnStart = micros();
 
     noInterrupts();
     for (unsigned char i = 0; i < dimmingLevel; i++)
     {
         delayMicroseconds(1);
-        digitalWrite(emitterPin, LOW);
+        digitalWrite(ePin, LOW);
         delayMicroseconds(1);
-        digitalWrite(emitterPin, HIGH);
+        digitalWrite(ePin, HIGH);
     }
     interrupts();
 

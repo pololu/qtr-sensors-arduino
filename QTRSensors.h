@@ -173,10 +173,10 @@ class QTRDimmable : virtual public QTRSensors
     void read(unsigned int *sensor_values, unsigned char readMode, unsigned char dimmingLevel);
 
     void emittersOff() override;
-    void emittersOff(unsigned char emitterPin, bool wait = true);
+    void emittersOff(unsigned char bank, bool wait = true);
 
     void emittersOn() override;
-    void emittersOn(unsigned char emitterPin, unsigned char dimmingLevel = 0, bool wait = true);
+    void emittersOn(unsigned char bank, unsigned char dimmingLevel = 0, bool wait = true);
 
     void emitterBankSelect(unsigned char bank, unsigned char dimmingLevel = 0);
 
