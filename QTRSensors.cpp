@@ -36,26 +36,38 @@
 #include <Arduino.h>
 
 
+// Base class constructor
+QTRSensors::QTRSensors() :
+    calibratedMinimumOn(nullptr),
+    calibratedMaximumOn(nullptr),
+    calibratedMinimumOff(nullptr),
+    calibratedMaximumOff(nullptr),
+    _pins(nullptr)
+{
+    // empty
+}
+
+
 // Base class data member initialization (called by derived class init())
 void QTRSensors::init(unsigned char *pins, unsigned char numSensors,
   unsigned char emitterPin)
 {
-    calibratedMinimumOn=0;
-    calibratedMaximumOn=0;
-    calibratedMinimumOff=0;
-    calibratedMaximumOff=0;
+    calibratedMinimumOn = nullptr;
+    calibratedMaximumOn = nullptr;
+    calibratedMinimumOff = nullptr;
+    calibratedMaximumOff = nullptr;
 
-    _lastValue=0; // assume initially that the line is left.
+    _lastValue = 0; // assume initially that the line is left.
 
     if (numSensors > QTR_MAX_SENSORS)
         _numSensors = QTR_MAX_SENSORS;
     else
         _numSensors = numSensors;
 
-    if (_pins == 0)
+    if (_pins == nullptr)
     {
         _pins = (unsigned char*)malloc(sizeof(unsigned char)*_numSensors);
-        if (_pins == 0)
+        if (_pins == nullptr)
             return;
     }
 
@@ -545,24 +557,9 @@ void QTRDimmable::emitterBankSelect(unsigned char bank, unsigned char dimmingLev
 
 
 // Derived RC class constructors
-QTRSensorsRC::QTRSensorsRC()
-{
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
-    _pins = 0;
-}
-
 QTRSensorsRC::QTRSensorsRC(unsigned char* pins,
   unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
 {
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
-    _pins = 0;
-
     init(pins, numSensors, timeout, emitterPin);
 }
 
@@ -640,25 +637,10 @@ void QTRSensorsRC::readPrivate(unsigned int *sensor_values, unsigned char pitch,
 
 
 // Derived Analog class constructors
-QTRSensorsAnalog::QTRSensorsAnalog()
-{
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
-    _pins = 0;
-}
-
 QTRSensorsAnalog::QTRSensorsAnalog(unsigned char* analogPins,
   unsigned char numSensors, unsigned char numSamplesPerSensor,
   unsigned char emitterPin)
 {
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
-    _pins = 0;
-
     init(analogPins, numSensors, numSamplesPerSensor, emitterPin);
 }
 
@@ -690,7 +672,7 @@ void QTRSensorsAnalog::init(unsigned char* analogPins,
     unsigned char numSensors, unsigned char numSamplesPerSensor,
     unsigned char emitterPin)
 {
-    QTRSensors::init(analogPins, numSensors, emitterPin);
+    init(analogPins, numSensors, emitterPin);
 
     _numSamplesPerSensor = numSamplesPerSensor;
     _maxValue = 1023; // this is the maximum returned by the A/D conversion
@@ -731,17 +713,20 @@ void QTRSensorsAnalog::readPrivate(unsigned int *sensor_values, unsigned char pi
 }
 
 
+// constructor
 QTRDimmableRC::QTRDimmableRC(unsigned char* pins,
   unsigned char numSensors, unsigned int timeout,
   unsigned char oddEmitterPin, unsigned char evenEmitterPin)
 {
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
-    _pins = 0;
-
     init(pins, numSensors, timeout, oddEmitterPin, evenEmitterPin);
+}
+
+void QTRDimmableRC::init(unsigned char* pins,
+    unsigned char numSensors, unsigned int timeout, unsigned char emitterPin)
+{
+    QTRDimmable::init(pins, numSensors, emitterPin);
+
+    _maxValue = timeout;
 }
 
 void QTRDimmableRC::init(unsigned char* pins,
@@ -753,17 +738,23 @@ void QTRDimmableRC::init(unsigned char* pins,
     _maxValue = timeout;
 }
 
+
+// constructor
 QTRDimmableAnalog::QTRDimmableAnalog(unsigned char* analogPins,
   unsigned char numSensors, unsigned char numSamplesPerSensor,
   unsigned char oddEmitterPin, unsigned char evenEmitterPin)
 {
-    calibratedMinimumOn = 0;
-    calibratedMaximumOn = 0;
-    calibratedMinimumOff = 0;
-    calibratedMaximumOff = 0;
-    _pins = 0;
-
     init(analogPins, numSensors, numSamplesPerSensor, oddEmitterPin, evenEmitterPin);
+}
+
+void QTRDimmableAnalog::init(unsigned char* analogPins,
+    unsigned char numSensors, unsigned char numSamplesPerSensor,
+    unsigned char emitterPin)
+{
+    QTRDimmable::init(analogPins, numSensors, emitterPin);
+
+    _numSamplesPerSensor = numSamplesPerSensor;
+    _maxValue = 1023; // this is the maximum returned by the A/D conversion
 }
 
 void QTRDimmableAnalog::init(unsigned char* analogPins,

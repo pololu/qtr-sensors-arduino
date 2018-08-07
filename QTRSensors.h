@@ -136,10 +136,7 @@ class QTRSensors
 
   protected:
 
-    QTRSensors()
-    {
-
-    };
+    QTRSensors();
 
     virtual void init(unsigned char *pins, unsigned char numSensors, unsigned char emitterPin);
 
@@ -198,7 +195,7 @@ class QTRSensorsRC : virtual public QTRSensors
 
     // if this constructor is used, the user must call init() before using
     // the methods in this class
-    QTRSensorsRC();
+    QTRSensorsRC() {}
 
     // this constructor just calls init()
     QTRSensorsRC(unsigned char* pins, unsigned char numSensors,
@@ -224,9 +221,8 @@ class QTRSensorsRC : virtual public QTRSensors
     // modules.  If you are using a 1RC (i.e. if there is no emitter pin),
     // or if you just want the emitters on all the time and don't want to
     // use an I/O pin to control it, use a value of 255 (QTR_NO_EMITTER_PIN).
-    void init(unsigned char* pins, unsigned char numSensors,
+    virtual void init(unsigned char* pins, unsigned char numSensors,
           unsigned int timeout = 2000, unsigned char emitterPin = QTR_NO_EMITTER_PIN);
-
 
   private:
 
@@ -247,7 +243,7 @@ class QTRSensorsAnalog : virtual public QTRSensors
 
     // if this constructor is used, the user must call init() before using
     // the methods in this class
-    QTRSensorsAnalog();
+    QTRSensorsAnalog() {}
 
     // this constructor just calls init()
     QTRSensorsAnalog(unsigned char* analogPins,
@@ -277,7 +273,7 @@ class QTRSensorsAnalog : virtual public QTRSensors
     // modules.  If you are using a 1RC (i.e. if there is no emitter pin),
     // or if you just want the emitters on all the time and don't want to
     // use an I/O pin to control it, use a value of 255 (QTR_NO_EMITTER_PIN).
-    void init(unsigned char* analogPins, unsigned char numSensors,
+    virtual void init(unsigned char* analogPins, unsigned char numSensors,
         unsigned char numSamplesPerSensor = 4, unsigned char emitterPin = QTR_NO_EMITTER_PIN);
 
   protected:
@@ -302,11 +298,16 @@ class QTRDimmableRC: public QTRDimmable, public QTRSensorsRC
 {
   public:
 
-    using QTRSensorsRC::QTRSensorsRC;
+    QTRDimmableRC() {}
+
+    using QTRSensorsRC::QTRSensorsRC; // inherit constructor with single emitter pin
 
     QTRDimmableRC(unsigned char* pins,
         unsigned char numSensors, unsigned int timeout,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
+
+    void init(unsigned char* pins, unsigned char numSensors,
+          unsigned int timeout = 2000, unsigned char emitterPin = QTR_NO_EMITTER_PIN) override;
 
     void init(unsigned char* pins,
         unsigned char numSensors, unsigned int timeout,
@@ -318,11 +319,16 @@ class QTRDimmableAnalog: public QTRDimmable, public QTRSensorsAnalog
 {
   public:
 
-    using QTRSensorsAnalog::QTRSensorsAnalog;
+    QTRDimmableAnalog() {}
+
+    using QTRSensorsAnalog::QTRSensorsAnalog; // inherit constructor with single emitter pin
 
     QTRDimmableAnalog(unsigned char* analogPins,
         unsigned char numSensors, unsigned char numSamplesPerSensor,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
+
+    void init(unsigned char* analogPins, unsigned char numSensors,
+        unsigned char numSamplesPerSensor = 4, unsigned char emitterPin = QTR_NO_EMITTER_PIN) override;
 
     void init(unsigned char* analogPins,
         unsigned char numSensors, unsigned char numSamplesPerSensor,
