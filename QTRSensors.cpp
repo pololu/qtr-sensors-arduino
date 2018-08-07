@@ -672,7 +672,7 @@ void QTRSensorsAnalog::init(unsigned char* analogPins,
     unsigned char numSensors, unsigned char numSamplesPerSensor,
     unsigned char emitterPin)
 {
-    init(analogPins, numSensors, emitterPin);
+    QTRSensors::init(analogPins, numSensors, emitterPin);
 
     _numSamplesPerSensor = numSamplesPerSensor;
     _maxValue = 1023; // this is the maximum returned by the A/D conversion
@@ -716,6 +716,13 @@ void QTRSensorsAnalog::readPrivate(unsigned int *sensor_values, unsigned char pi
 // constructor
 QTRDimmableRC::QTRDimmableRC(unsigned char* pins,
   unsigned char numSensors, unsigned int timeout,
+  unsigned char emitterPin)
+{
+    init(pins, numSensors, timeout, emitterPin);
+}
+
+QTRDimmableRC::QTRDimmableRC(unsigned char* pins,
+  unsigned char numSensors, unsigned int timeout,
   unsigned char oddEmitterPin, unsigned char evenEmitterPin)
 {
     init(pins, numSensors, timeout, oddEmitterPin, evenEmitterPin);
@@ -740,6 +747,13 @@ void QTRDimmableRC::init(unsigned char* pins,
 
 
 // constructor
+QTRDimmableAnalog::QTRDimmableAnalog(unsigned char* analogPins,
+  unsigned char numSensors, unsigned char numSamplesPerSensor,
+  unsigned char emitterPin)
+{
+    init(analogPins, numSensors, numSamplesPerSensor, emitterPin);
+}
+
 QTRDimmableAnalog::QTRDimmableAnalog(unsigned char* analogPins,
   unsigned char numSensors, unsigned char numSamplesPerSensor,
   unsigned char oddEmitterPin, unsigned char evenEmitterPin)
