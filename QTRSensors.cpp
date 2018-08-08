@@ -388,18 +388,18 @@ void QTRDimmable::init(unsigned char *pins, unsigned char numSensors,
 }
 
 
-void QTRDimmable::read(unsigned int *sensor_values, unsigned char readMode, unsigned char dimmingLevel)
+void QTRDimmable::read(unsigned int *sensor_values, unsigned char readMode)
 {
     if (readMode == QTR_EMITTERS_ODD_EVEN || readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
     {
-        emitterBankSelect(QTR_BANK_ODD, dimmingLevel);
+        emitterBankSelect(QTR_BANK_ODD);
 
         // Read the odd-numbered sensors.
         // (readPrivate takes a 0-based array index, so start = 0 to start with
         // the first sensor)
         readPrivate(sensor_values, 2, 0);
 
-        emitterBankSelect(QTR_BANK_EVEN, dimmingLevel);
+        emitterBankSelect(QTR_BANK_EVEN);
 
         // Read the even-numbered sensors.
         // (readPrivate takes a 0-based array index, so start = 1 to start with
@@ -409,7 +409,7 @@ void QTRDimmable::read(unsigned int *sensor_values, unsigned char readMode, unsi
     else
     {
         if (readMode == QTR_EMITTERS_ON || readMode == QTR_EMITTERS_ON_AND_OFF)
-            emittersOn(_emitterPin, dimmingLevel);
+            emittersOn();
         else if (readMode == QTR_EMITTERS_OFF)
             emittersOff();
 
@@ -441,7 +441,7 @@ void QTRDimmable::emittersOff()
         // and let odd pin control all emitters
         pinMode (_evenEmitterPin, INPUT);
     }
-    emittersOff(_emitterPin);
+    emittersOff(QTR_BANK_ODD);
 }
 
 void QTRDimmable::emittersOff(unsigned char bank, bool wait)
@@ -477,11 +477,11 @@ void QTRDimmable::emittersOn()
         // and let odd pin control all emitters
         pinMode (_evenEmitterPin, INPUT);
     }
-    emittersOn(_emitterPin);
+    emittersOn(QTR_BANK_ODD);
 }
 
 
-void QTRDimmable::emittersOn(unsigned char bank, unsigned char dimmingLevel, bool wait)
+void QTRDimmable::emittersOn(unsigned char bank, bool wait)
 {
     unsigned char ePin;
 
@@ -497,17 +497,12 @@ void QTRDimmable::emittersOn(unsigned char bank, unsigned char dimmingLevel, boo
     if (ePin == QTR_NO_EMITTER_PIN)
         return;
 
-    if (dimmingLevel > 31)
-    {
-        dimmingLevel = 31;
-    }
-
     pinMode(ePin, OUTPUT);
     digitalWrite(ePin, HIGH);
     unsigned int turnOnStart = micros();
 
     noInterrupts();
-    for (unsigned char i = 0; i < dimmingLevel; i++)
+    for (unsigned char i = 0; i < _dimmingLevel; i++)
     {
         delayMicroseconds(1);
         digitalWrite(ePin, LOW);
@@ -527,25 +522,23 @@ void QTRDimmable::emittersOn(unsigned char bank, unsigned char dimmingLevel, boo
     }
 }
 
-void QTRDimmable::emitterBankSelect(unsigned char bank, unsigned char dimmingLevel)
+void QTRDimmable::emitterBankSelect(unsigned char bank)
 {
-    unsigned char offPin, onPin;
+    unsigned char offBank;
 
     if (bank == QTR_BANK_ODD)
     {
-        offPin = _evenEmitterPin;
-        onPin = _emitterPin;
+        offBank = QTR_BANK_EVEN;
     }
-    else
+    else // bank == QTR_BANK_EVEN
     {
-        offPin = _emitterPin;
-        onPin = _evenEmitterPin;
+        offBank = QTR_BANK_ODD;
     }
 
-    emittersOff(offPin, false);
+    emittersOff(offBank, false);
     unsigned int turnOffStart = micros();
 
-    emittersOn(onPin, dimmingLevel, false);
+    emittersOn(bank, false);
 
     // Make sure it's been at least 1200 us since the first bank was turned off
     // before returning. (minimum 1 ms; add some margin)
@@ -553,6 +546,16 @@ void QTRDimmable::emitterBankSelect(unsigned char bank, unsigned char dimmingLev
     {
         delayMicroseconds(10);
     }
+}
+
+
+void QTRDimmable::setDimmingLevel(unsigned char dimmingLevel)
+{
+    if (dimmingLevel > 31)
+    {
+        dimmingLevel = 31;
+    }
+    _dimmingLevel = dimmingLevel;
 }
 
 

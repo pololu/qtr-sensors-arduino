@@ -145,8 +145,7 @@ class QTRSensors
     unsigned char *_pins;
     unsigned char _numSensors;
     unsigned char _emitterPin;
-    unsigned int _maxValue; // the maximum value returned by this function
-    int _lastValue;
+    unsigned int _maxValue; // the maximum value returned by readPrivate()
 
   private:
 
@@ -156,6 +155,8 @@ class QTRSensors
     void calibrateOnOrOff(unsigned int **calibratedMinimum,
                           unsigned int **calibratedMaximum,
                           unsigned char readMode);
+
+    int _lastValue;
 };
 
 
@@ -163,19 +164,18 @@ class QTRDimmable : virtual public QTRSensors
 {
   public:
 
-    void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON) override
-    {
-        read(sensor_values, readMode, 0);
-    }
-    void read(unsigned int *sensor_values, unsigned char readMode, unsigned char dimmingLevel);
+    void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON) override;
 
     void emittersOff() override;
     void emittersOff(unsigned char bank, bool wait = true);
 
     void emittersOn() override;
-    void emittersOn(unsigned char bank, unsigned char dimmingLevel = 0, bool wait = true);
+    void emittersOn(unsigned char bank, bool wait = true);
 
-    void emitterBankSelect(unsigned char bank, unsigned char dimmingLevel = 0);
+    void emitterBankSelect(unsigned char bank);
+
+    void setDimmingLevel(unsigned char dimmingLevel);
+    unsigned char getDimmingLevel() { return _dimmingLevel; }
 
   protected:
 
@@ -184,7 +184,10 @@ class QTRDimmable : virtual public QTRSensors
     void init(unsigned char *pins, unsigned char numSensors,
           unsigned char oddEmitterPin, unsigned char evenEmitterPin);
 
+  private:
+
     unsigned char _evenEmitterPin; // odd pin is stored in _emitterPin
+    unsigned char _dimmingLevel;
 };
 
 
