@@ -48,9 +48,8 @@
 
 #define QTR_MAX_SENSORS 31
 
-// This class cannot be instantiated directly (it has no constructor).
-// Instead, you should instantiate one of its two derived classes (either the
-// QTR-A or QTR-RC version, depending on the type of your sensor).
+// Base class: this class cannot be instantiated directly.
+// Instead, you should instantiate one of its derived classes.
 class QTRSensors
 {
   public:
@@ -71,10 +70,10 @@ class QTRSensors
     // overridden by each derived class's own implementation.
     virtual void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON);
 
-    // Turn the IR LEDs off and on.  This is mainly for use by the
-    // read method, and calling these functions before or
-    // after the reading the sensors will have no effect on the
-    // readings, but you may wish to use these for testing purposes.
+    // Turn the IR LEDs off and on.  These are mainly for use by the read
+    // method, and calling these functions before or after reading the sensors
+    // will have no effect on the readings unless the readMode is
+    // QTR_EMITTERS_MANUAL, but you may wish to use these for testing purposes.
     virtual void emittersOff();
     virtual void emittersOn();
 
@@ -140,7 +139,7 @@ class QTRSensors
 
     virtual void init(unsigned char *pins, unsigned char numSensors, unsigned char emitterPin);
 
-    virtual void readPrivate(unsigned int *sensor_values, unsigned char pitch = 1, unsigned char start = 0) = 0;
+    virtual void readPrivate(unsigned int *sensor_values, unsigned char step = 1, unsigned char start = 0) = 0;
 
     unsigned char *_pins;
     unsigned char _numSensors;
@@ -159,25 +158,47 @@ class QTRSensors
     int _lastValue;
 };
 
-
+// Base class for dimmable QTR sensors with support for odd/even emitter bank
+// control; derived from QTRSensors. This class also cannot be instantiated
+// directly, and you should instantiate one of its derived classes instead.
 class QTRDimmable : virtual public QTRSensors
 {
   public:
 
+    // Read function for dimmable sensors with support for additional (odd/even)
+    // readModes. The odd/even readModes only work if the object was initialized
+    // with two emitter pins.
     void read(unsigned int *sensor_values, unsigned char readMode = QTR_EMITTERS_ON) override;
 
+    // Turns off emitters for dimmable sensors with one bank or combined banks.
     void emittersOff() override;
+    // Turns off emitters for selected bank on dimmable sensors with separate
+    // banks. If wait = false, returns immediately without waiting for emitters
+    // to actually turn off.
     void emittersOff(unsigned char bank, bool wait = true);
 
+    // Turns on emitters for dimmable sensors with one bank or combined banks.
     void emittersOn() override;
+    // Turns on emitters for selected bank on dimmable sensors with separate
+    // banks. If wait = false, returns immediately without waiting for emitters
+    // to actually turn on.
     void emittersOn(unsigned char bank, bool wait = true);
 
+    // Turns on the selected bank and turns off the other bank with optimized
+    // timing (no unnecessary waits compared to calling emittersOff and
+    // emittersOn separately, but still waits for both banks of emitters to be
+    // in the right states before returning).
     void emitterBankSelect(unsigned char bank);
 
+    // Sets and gets the dimming level (0-31). A dimming level of 0 corresponds
+    // to full current and brightness, with higher dimming levels meaning lower
+    // currents; see the product page for your sensor for details.
     void setDimmingLevel(unsigned char dimmingLevel);
     unsigned char getDimmingLevel() { return _dimmingLevel; }
 
   protected:
+
+    QTRDimmable() {} // empty constructor
 
     void init(unsigned char *pins, unsigned char numSensors,
           unsigned char emitterPin) override;
@@ -191,7 +212,7 @@ class QTRDimmable : virtual public QTRSensors
 };
 
 
-// Object to be used for QTR-1RC and QTR-8RC sensors
+// Object to be used for original (non-dimmable) QTR-xRC sensors
 class QTRSensorsRC : virtual public QTRSensors
 {
   public:
@@ -235,11 +256,15 @@ class QTRSensorsRC : virtual public QTRSensors
     // unsigned int sensor_values[8];
     // sensors.read(sensor_values);
     // The values returned are a measure of the reflectance in microseconds.
-    void readPrivate(unsigned int *sensor_values, unsigned char pitch = 1, unsigned char start = 0) override;
+    // A 'step' of n means that the first of every n sensors is read, starting
+    // with 'start' (this is 0-indexed, so start = 0 means start with the first
+    // sensor). For example, step = 2, start = 1 means read the *even-numbered*
+    // sensors.
+    void readPrivate(unsigned int *sensor_values, unsigned char step = 1, unsigned char start = 0) override;
 };
 
 
-// Object to be used for QTR-1A and QTR-8A sensors
+// Object to be used for original (non-dimmable) QTR-xA sensors
 class QTRSensorsAnalog : virtual public QTRSensors
 {
   public:
@@ -293,50 +318,60 @@ class QTRSensorsAnalog : virtual public QTRSensors
     // The values returned are a measure of the reflectance in terms of a
     // 10-bit ADC average with higher values corresponding to lower
     // reflectance (e.g. a black surface or a void).
-    void readPrivate(unsigned int *sensor_values, unsigned char pitch = 1, unsigned char start = 0) override;
+    // A 'step' of n means that the first of every n sensors is read, starting
+    // with 'start' (this is 0-indexed, so start = 0 means start with the first
+    // sensor). For example, step = 2, start = 1 means read the *even-numbered*
+    // sensors.
+    void readPrivate(unsigned int *sensor_values, unsigned char step = 1, unsigned char start = 0) override;
 };
 
 
+// Object to be used for dimmable QTR-xD-xRC and QTRX-xD-xRC sensors
 class QTRDimmableRC: public QTRDimmable, public QTRSensorsRC
 {
   public:
 
+    // if this constructor is used, the user must call init() before using
+    // the methods in this class
     QTRDimmableRC() {}
 
+    // this constructor just calls init() (one bank or combined banks)
     QTRDimmableRC(unsigned char* pins,
         unsigned char numSensors, unsigned int timeout = 2500,
         unsigned char emitterPin = QTR_NO_EMITTER_PIN);
-
+    // this constructor just calls init() (separate banks)
     QTRDimmableRC(unsigned char* pins,
         unsigned char numSensors, unsigned int timeout,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
 
     void init(unsigned char* pins, unsigned char numSensors,
           unsigned int timeout = 2500, unsigned char emitterPin = QTR_NO_EMITTER_PIN) override;
-
     void init(unsigned char* pins,
         unsigned char numSensors, unsigned int timeout,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
 };
 
 
+// Object to be used for dimmable QTR-xD-xA and QTRX-xD-xA sensors
 class QTRDimmableAnalog: public QTRDimmable, public QTRSensorsAnalog
 {
   public:
 
+    // if this constructor is used, the user must call init() before using
+    // the methods in this class
     QTRDimmableAnalog() {}
 
+    // this constructor just calls init() (one bank or combined banks)
     QTRDimmableAnalog(unsigned char* analogPins,
         unsigned char numSensors, unsigned char numSamplesPerSensor = 4,
         unsigned char emitterPin = QTR_NO_EMITTER_PIN);
-
+    // this constructor just calls init() (separate banks)
     QTRDimmableAnalog(unsigned char* analogPins,
         unsigned char numSensors, unsigned char numSamplesPerSensor,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
 
     void init(unsigned char* analogPins, unsigned char numSensors,
         unsigned char numSamplesPerSensor = 4, unsigned char emitterPin = QTR_NO_EMITTER_PIN) override;
-
     void init(unsigned char* analogPins,
         unsigned char numSensors, unsigned char numSamplesPerSensor,
         unsigned char oddEmitterPin, unsigned char evenEmitterPin);
