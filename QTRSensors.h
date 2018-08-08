@@ -141,6 +141,7 @@ class QTRSensors
     int _lastValue;
 };
 
+
 // Base class for dimmable QTR sensors with support for odd/even emitter bank
 // control; derived from QTRSensors. This class also cannot be instantiated
 // directly, and you should instantiate one of its derived classes instead.
