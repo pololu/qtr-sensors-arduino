@@ -1,7 +1,7 @@
 # Arduino library for the Pololu QTR Reflectance Sensors
 
-Version: 3.0.0<br>
-Release date: 2016-08-16<br>
+Version: 3.1.0<br>
+Release date: 2018-08-18<br>
 [![Build Status](https://travis-ci.org/pololu/qtr-sensors-arduino.svg?branch=master)](https://travis-ci.org/pololu/qtr-sensors-arduino)<br>
 [www.pololu.com](https://www.pololu.com/)
 
@@ -17,6 +17,7 @@ For documentation, please see the
 Pololu's website.
 
 ## Version history
+* 3.1.0 (2018-08-08): Added support for dimmable QTR and QTRX sensors with separate control of odd/even emitter banks.
 * 3.0.0 (2016-08-16): Updated library to work with the Arduino Library Manager.
 * 2.1.2 (2015-12-03): Corrected `readLine()` behavior to work with multiple instances (thanks to Tandy Carmichael).
 * 2.1.1 (2014-05-02): Minor improvements to `read()` behavior and whitespace cleanup.
