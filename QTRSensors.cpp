@@ -135,7 +135,6 @@ void QTRSensors::calibrate(unsigned char readMode)
                          QTR_EMITTERS_ON);
     }
 
-
     if(readMode == QTR_EMITTERS_ON_AND_OFF || readMode == QTR_EMITTERS_OFF)
     {
         calibrateOnOrOff(&calibratedMinimumOff,
@@ -506,6 +505,34 @@ void QTRDimmable::emittersOn(unsigned char bank, bool wait)
             delayMicroseconds(10);
         }
     }
+}
+
+
+void QTRDimmable::calibrate(unsigned char readMode)
+{
+  if (readMode == QTR_EMITTERS_ON_AND_OFF ||
+      readMode == QTR_EMITTERS_ON)
+  {
+      calibrateOnOrOff(&calibratedMinimumOn,
+                       &calibratedMaximumOn,
+                       QTR_EMITTERS_ON);
+  }
+  else if(readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF ||
+          readMode == QTR_EMITTERS_ODD_EVEN)
+  {
+      calibrateOnOrOff(&calibratedMinimumOn,
+                       &calibratedMaximumOn,
+                       QTR_EMITTERS_ODD_EVEN);
+  }
+
+  if (readMode == QTR_EMITTERS_ON_AND_OFF ||
+      readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF ||
+      readMode == QTR_EMITTERS_OFF)
+  {
+      calibrateOnOrOff(&calibratedMinimumOff,
+                       &calibratedMaximumOff,
+                       QTR_EMITTERS_OFF);
+  }
 }
 
 

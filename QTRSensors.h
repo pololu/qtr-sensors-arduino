@@ -64,7 +64,7 @@ class QTRSensors
     // not returned; instead, the maximum and minimum values found
     // over time are stored internally and used for the
     // readCalibrated() method.
-    void calibrate(unsigned char readMode = QTR_EMITTERS_ON);
+    virtual void calibrate(unsigned char readMode = QTR_EMITTERS_ON);
 
     // Resets all calibration that has been done.
     void resetCalibration();
@@ -124,19 +124,19 @@ class QTRSensors
 
     virtual void readPrivate(unsigned int *sensor_values, unsigned char step = 1, unsigned char start = 0) = 0;
 
-    unsigned char *_pins;
-    unsigned char _numSensors;
-    unsigned char _emitterPin;
-    unsigned int _maxValue; // the maximum value returned by readPrivate()
-
-  private:
-
     // Handles the actual calibration. calibratedMinimum and
     // calibratedMaximum are pointers to the requested calibration
     // arrays, which will be allocated if necessary.
     void calibrateOnOrOff(unsigned int **calibratedMinimum,
                           unsigned int **calibratedMaximum,
                           unsigned char readMode);
+
+    unsigned char *_pins;
+    unsigned char _numSensors;
+    unsigned char _emitterPin;
+    unsigned int _maxValue; // the maximum value returned by readPrivate()
+
+  private:
 
     int _lastValue;
 };
@@ -167,6 +167,8 @@ class QTRDimmable : virtual public QTRSensors
     // banks. If wait = false, returns immediately without waiting for emitters
     // to actually turn on.
     void emittersOn(unsigned char bank, bool wait = true);
+
+    void calibrate(unsigned char readMode = QTR_EMITTERS_ON) override;
 
     // Turns on the selected bank and turns off the other bank with optimized
     // timing (no unnecessary waits compared to calling emittersOff and
