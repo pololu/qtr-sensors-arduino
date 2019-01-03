@@ -24,6 +24,7 @@ QTRSensors::QTRSensors() :
     // empty
 }
 
+
 void QTRSensors::setType(uint8_t type)
 {
   switch (type)
@@ -32,12 +33,12 @@ void QTRSensors::setType(uint8_t type)
       _type = QTR_TYPE_RC;
       _maxValue = _timeout;
       break;
-      
+
     case QTR_TYPE_ANALOG:
       _type = QTR_TYPE_ANALOG;
       _maxValue = 1023; // Arduino analogRead() returns a 10-bit value by default
       break;
-    
+
     default:
       _type = QTR_TYPE_UNDEFINED;
   }
@@ -60,7 +61,7 @@ void QTRSensors::setSensorPins(uint8_t *pins, uint8_t sensorCount)
   {
     _sensorPins[i] = pins[i];
   }
-  
+
   _sensorCount = sensorCount;
 }
 
@@ -73,7 +74,7 @@ void QTRSensors::setTimeout(uint16_t timeout)
 void QTRSensors::setEmitterPin(uint8_t emitterPin)
 {
   releaseEmitterPins();
-  
+
   _oddEmitterPin = emitterPin;
   pinMode(_oddEmitterPin, OUTPUT);
   _emitterPinCount = 1;
@@ -82,7 +83,7 @@ void QTRSensors::setEmitterPin(uint8_t emitterPin)
 void QTRSensors::setEmitterPins(uint8_t oddEmitterPin, uint8_t evenEmitterPin)
 {
   releaseEmitterPins();
-  
+
   _oddEmitterPin = oddEmitterPin;
   _evenEmitterPin = evenEmitterPin;
   pinMode(_oddEmitterPin, OUTPUT);
@@ -97,7 +98,7 @@ void QTRSensors::releaseEmitterPins()
     pinMode(_oddEmitterPin, INPUT);
     _oddEmitterPin = QTR_NO_EMITTER_PIN;
   }
-  
+
   if (_evenEmitterPin != QTR_NO_EMITTER_PIN)
   {
     pinMode(_evenEmitterPin, INPUT);
@@ -128,7 +129,7 @@ void QTRSensors::setDimmingLevel(uint8_t dimmingLevel)
 void QTRSensors::emittersOff(uint8_t bank, bool wait)
 {
   bool pinChanged = false;
-  
+
   // Use odd emitter pin in these cases:
   // - 1 emitter pin, bank = all
   // - 2 emitter pins, bank = all
@@ -141,7 +142,7 @@ void QTRSensors::emittersOff(uint8_t bank, bool wait)
       pinChanged = true;
     }
   }
-  
+
   // Use even emitter pin in these cases:
   // - 2 emitter pins, bank = all
   // - 2 emitter pins, bank = even
@@ -153,7 +154,7 @@ void QTRSensors::emittersOff(uint8_t bank, bool wait)
       pinChanged = true;
     }
   }
-  
+
   if (wait && pinChanged)
   {
     if (_dimmable)
@@ -172,7 +173,7 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
 {
   bool pinChanged = false;
   uint16_t emittersOnStart;
-  
+
   // Use odd emitter pin in these cases:
   // - 1 emitter pin, bank = all
   // - 2 emitter pins, bank = all
@@ -185,7 +186,7 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
       pinChanged = true;
     }
   }
-  
+
   // Use even emitter pin in these cases:
   // - 2 emitter pins, bank = all
   // - 2 emitter pins, bank = even
@@ -197,13 +198,14 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
       pinChanged = true;
     }
   }
-  
+
   if (wait && pinChanged)
   {
     if (_dimmable)
     {
       // Make sure it's been at least 300 us since the emitter pin was first set
-      // high before returning. (driver min is 250 us)
+      // high before returning. (Driver min is 250 us.) Some time might have
+      // already passed while we set the dimming level.
       while ((uint16_t)(micros() - emittersOnStart) < 300)
       {
         delayMicroseconds(10);
@@ -222,21 +224,21 @@ uint16_t QTRSensors::emittersOnWithPin(uint8_t pin)
 {
   if (_dimmable && (digitalRead(pin) == HIGH))
   {
-    // We want to turn on dimmable emitters that are already on. To avoid
-    // messing up the dimming level, we have to turn the emitters off and back
-    // on. This means the turn-off delay will happen even if wait = false was
-    // passed to emittersOn(). (driver min is 1 ms)
+    // We are turning on dimmable emitters that are already on. To avoid messing
+    // up the dimming level, we have to turn the emitters off and back on. This
+    // means the turn-off delay will happen even if wait = false was passed to
+    // emittersOn(). (Driver min is 1 ms.)
     digitalWrite(pin, LOW);
     delayMicroseconds(1200);
   }
-  
+
   digitalWrite(pin, HIGH);
   uint16_t emittersOnStart = micros();
-  
+
   if (_dimmable && (_dimmingLevel > 0))
   {
     noInterrupts();
-    
+
     for (uint8_t i = 0; i < _dimmingLevel; i++)
     {
       delayMicroseconds(1);
@@ -244,10 +246,10 @@ uint16_t QTRSensors::emittersOnWithPin(uint8_t pin)
       delayMicroseconds(1);
       digitalWrite(pin, HIGH);
     }
-    
+
     interrupts();
   }
-  
+
   return emittersOnStart;
 }
 
@@ -264,19 +266,19 @@ void QTRSensors::emitterBankSelect(uint8_t bank)
     case QTR_BANK_ODD:
       offBank = QTR_BANK_EVEN;
       break;
-    
+
     case QTR_BANK_EVEN:
       offBank = QTR_BANK_ODD;
       break;
-      
+
     case QTR_BANK_ALL:
       emittersOn();
       return;
-      
+
     case QTR_BANK_NONE:
       emittersOff();
       return;
-      
+
     default: // invalid
       return;
   }
@@ -292,7 +294,8 @@ void QTRSensors::emitterBankSelect(uint8_t bank)
   {
     // Finish waiting for the off-bank emitters to turn off: make sure it's been
     // at least 1200 us since the off-bank was turned off before returning.
-    // (driver min is 1 ms)
+    // (Driver min is 1 ms.) Some time has already passed while we waited for
+    // the on-bank to turn on.
     while ((uint16_t)(micros() - turnOffStart) < 1200)
     {
       delayMicroseconds(10);
@@ -313,6 +316,7 @@ void QTRSensors::resetCalibration()
   }
 }
 
+
 // Reads the sensors 10 times and uses the results for
 // calibration.  The sensor values are not returned; instead, the
 // maximum and minimum values found over time are stored internally
@@ -321,7 +325,7 @@ void QTRSensors::calibrate(uint8_t readMode)
 {
   // manual emitter control is not supported
   if (readMode == QTR_EMITTERS_MANUAL) { return; }
-  
+
   if (readMode == QTR_EMITTERS_ON ||
       readMode == QTR_EMITTERS_ON_AND_OFF)
   {
@@ -345,14 +349,13 @@ void QTRSensors::calibrate(uint8_t readMode)
 }
 
 
-// todo explain https://github.com/pololu/qtr-sensors-arduino/issues/3
 void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
                                   uint16_t **calibratedMaximum,
                                   uint8_t readMode)
 {
   uint16_t sensorValues[16];
-  uint16_t max_sensorValues[16];
-  uint16_t min_sensorValues[16];
+  uint16_t maxSensorValues[16];
+  uint16_t minSensorValues[16];
 
   // Allocate the arrays if necessary.
   if (*calibratedMaximum == nullptr)
@@ -385,19 +388,19 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
   for (uint8_t j = 0; j < 10; j++)
   {
     read(sensorValues, readMode);
-    
+
     for (uint8_t i = 0; i < _sensorCount; i++)
     {
       // set the max we found THIS time
-      if ((j == 0) || (sensorValues[i] > max_sensorValues[i]))
+      if ((j == 0) || (sensorValues[i] > maxSensorValues[i]))
       {
-        max_sensorValues[i] = sensorValues[i];
+        maxSensorValues[i] = sensorValues[i];
       }
 
       // set the min we found THIS time
-      if ((j == 0) || (sensorValues[i] < min_sensorValues[i]))
+      if ((j == 0) || (sensorValues[i] < minSensorValues[i]))
       {
-        min_sensorValues[i] = sensorValues[i];
+        minSensorValues[i] = sensorValues[i];
       }
     }
   }
@@ -405,18 +408,20 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
   // record the min and max calibration values
   for (uint8_t i = 0; i < _sensorCount; i++)
   {
-    // Update calibratedMaximum only if the lowest of 10 readings was still
-    // higher than it.
-    if (min_sensorValues[i] > (*calibratedMaximum)[i])
+    // Update calibratedMaximum only if the min of 10 readings was still higher
+    // than it (we got 10 readings in a row higher than the existing
+    // calibratedMaximum).
+    if (minSensorValues[i] > (*calibratedMaximum)[i])
     {
-      (*calibratedMaximum)[i] = min_sensorValues[i];
+      (*calibratedMaximum)[i] = minSensorValues[i];
     }
-    
-    // Update calibratedMinimum only if the highest of 10 readings was still
-    // lower than it.
-    if (max_sensorValues[i] < (*calibratedMinimum)[i])
+
+    // Update calibratedMinimum only if the max of 10 readings was still lower
+    // than it (we got 10 readings in a row lower than the existing
+    // calibratedMinimum).
+    if (maxSensorValues[i] < (*calibratedMinimum)[i])
     {
-      (*calibratedMinimum)[i] = max_sensorValues[i];
+      (*calibratedMinimum)[i] = maxSensorValues[i];
     }
   }
 }
@@ -436,18 +441,18 @@ void QTRSensors::read(uint16_t *sensorValues, uint8_t readMode)
     case QTR_EMITTERS_OFF:
       emittersOff();
       // fall through
-      
+
     case QTR_EMITTERS_MANUAL:
       readPrivate(sensorValues);
       return;
-      
+
     case QTR_EMITTERS_ON:
     case QTR_EMITTERS_ON_AND_OFF:
       emittersOn();
       readPrivate(sensorValues);
       emittersOff();
       break;
-    
+
     case QTR_EMITTERS_ODD_EVEN:
     case QTR_EMITTERS_ODD_EVEN_AND_OFF:
       // Turn on odd emitters and read the odd-numbered sensors.
@@ -461,25 +466,25 @@ void QTRSensors::read(uint16_t *sensorValues, uint8_t readMode)
       // the second sensor)
       emitterBankSelect(QTR_BANK_EVEN);
       readPrivate(sensorValues, QTR_BANK_EVEN);
-      
+
       emittersOff();
       break;
-    
+
     default: // invalid - do nothing
       return;
   }
-  
+
   if (readMode == QTR_EMITTERS_ON_AND_OFF ||
       readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
   {
     // Take a second set of readings and return the values (on + max - off).
-    
-    uint16_t off_values[QTR_MAX_SENSORS];
-    readPrivate(off_values);
+
+    uint16_t offValues[QTR_MAX_SENSORS];
+    readPrivate(offValues);
 
     for (uint8_t i = 0; i < _sensorCount; i++)
     {
-      sensorValues[i] += _maxValue - off_values[i];
+      sensorValues[i] += _maxValue - offValues[i];
     }
   }
 }
@@ -494,9 +499,9 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
 {
   // manual emitter control is not supported
   if (readMode == QTR_EMITTERS_MANUAL) { return; }
-  
+
   // if not calibrated, do nothing
-  
+
   if (readMode == QTR_EMITTERS_ON ||
       readMode == QTR_EMITTERS_ON_AND_OFF ||
       readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
@@ -506,7 +511,7 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
       return;
     }
   }
-  
+
   if (readMode == QTR_EMITTERS_OFF ||
       readMode == QTR_EMITTERS_ON_AND_OFF ||
       readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
@@ -549,7 +554,7 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
         calmin = calibratedMinimumOn[i] + _maxValue - calibratedMinimumOff[i];
       }
 
-      if (calibratedMaximumOff[i] < calibratedMaximumOn[i]) 
+      if (calibratedMaximumOff[i] < calibratedMaximumOn[i])
       {
         // no meaningful signal
         calmax = _maxValue;
@@ -557,21 +562,21 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
       else
       {
         // this won't go past _maxValue
-        calmax = calibratedMaximumOn[i] + _maxValue - calibratedMaximumOff[i]; 
+        calmax = calibratedMaximumOn[i] + _maxValue - calibratedMaximumOff[i];
       }
     }
 
     uint16_t denominator = calmax - calmin;
     int16_t value = 0;
-    
+
     if (denominator != 0)
     {
       value = (((int32_t)sensorValues[i]) - calmin) * 1000 / denominator;
     }
-    
+
     if (value < 0) { value = 0; }
     else if (value > 1000) { value = 1000; }
-    
+
     sensorValues[i] = value;
   }
 }
@@ -602,10 +607,10 @@ int QTRSensors::readLine(uint16_t *sensorValues, uint8_t readMode,
   bool onLine = false;
   uint32_t avg = 0; // this is for the weighted total
   uint16_t sum = 0; // this is for the denominator, which is <= 64000
-    
+
   // manual emitter control is not supported
   if (readMode == QTR_EMITTERS_MANUAL) { return; }
-  
+
   readCalibrated(sensorValues, readMode);
 
   avg = 0;
@@ -667,27 +672,27 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
 {
   // starting value and increment for sensorValues array index
   uint8_t start = 0, step = 1;
-  
+
   switch (bank)
   {
     case QTR_BANK_ALL:
       // no change
       break;
-      
+
     case QTR_BANK_EVEN:
       start = 1;
       // fall through
-      
+
     case QTR_BANK_ODD:
       step = 2;
       break;
-      
+
     default: // QTR_BANK_NONE or invalid - do nothing
       return;
   }
 
   if (_sensorPins == nullptr) { return; }
-  
+
   switch (_type)
   {
     case QTR_TYPE_RC:
@@ -721,7 +726,7 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
         }
       }
       return;
-      
+
     case QTR_TYPE_ANALOG:
       // reset the values
       for (uint8_t i = start; i < _sensorCount; i += step)
@@ -744,7 +749,7 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
           _samplesPerSensor;
       }
       return;
-    
+
     default: // QTR_TYPE_UNDEFINED or invalid - do nothing
       return;
   }
@@ -755,7 +760,7 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
 QTRSensors::~QTRSensors()
 {
   releaseEmitterPins();
-  
+
   if (_sensorPins)          { free(_sensorPins); }
   if (calibratedMaximumOn)   { free(calibratedMaximumOn); }
   if (calibratedMaximumOff)  { free(calibratedMaximumOff); }

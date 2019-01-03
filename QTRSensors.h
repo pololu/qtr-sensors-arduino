@@ -97,7 +97,7 @@ class QTRSensors
     // over time are stored internally and used for the
     // readCalibrated() method.
     void calibrate(uint8_t readMode = QTR_EMITTERS_ON);
-    
+
     // Resets all calibration that has been done.
     void resetCalibration();
 
@@ -165,16 +165,16 @@ class QTRSensors
 
   private:
     uint16_t emittersOnWithPin(uint8_t pin);
-    
+
     // Handles the actual calibration. calibratedMinimum and
     // calibratedMaximum are pointers to the requested calibration
     // arrays, which will be allocated if necessary.
     void calibrateOnOrOff(uint16_t **calibratedMinimum,
                           uint16_t **calibratedMaximum,
                           uint8_t readMode);
-                          
+
     void readPrivate(uint16_t *sensorValues, uint8_t bank = QTR_BANK_ALL);
-    
+
     uint8_t _type;
 
     uint8_t *_sensorPins;
