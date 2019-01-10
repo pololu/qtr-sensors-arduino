@@ -704,15 +704,19 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
 
       delayMicroseconds(10);                // charge lines for 10 us
 
+      noInterrupts(); // disable interrupts so we can switch all the pins as close to the same time as possible
+
       for (uint8_t i = start; i < _sensorCount; i += step)
       {
-        pinMode(_sensorPins[i], INPUT);     // make sensor line an input
-        digitalWrite(_sensorPins[i], LOW);  // important: disable internal pull-up!
+        pinMode(_sensorPins[i], INPUT);     // make sensor line an input (should also ensure pull-up is disabled)
       }
 
       {
         uint32_t startTime = micros();
         uint16_t time = 0;
+
+        interrupts(); // re-enable interrupts
+
         while (time < _maxValue)
         {
           time = micros() - startTime;
