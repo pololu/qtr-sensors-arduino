@@ -13,7 +13,7 @@ QTRSensors::QTRSensors() :
   _emitterPinCount(0),
   _oddEmitterPin(QTR_NO_EMITTER_PIN),
   _evenEmitterPin(QTR_NO_EMITTER_PIN),
-  _dimmable(true),
+  _dimmable(true), // TODO decide if this should default to false
   _dimmingLevel(0),
   _lastPosition(0),
   calibratedMinimumOn(nullptr),
@@ -53,11 +53,11 @@ void QTRSensors::setSensorPins(uint8_t *pins, uint8_t sensorCount)
 
   if (_sensorPins == nullptr)
   {
-    _sensorPins = (uint8_t *)malloc(sizeof(uint8_t) * _sensorCount);
+    _sensorPins = (uint8_t *)malloc(sizeof(uint8_t) * sensorCount);
     if (_sensorPins == nullptr) { return; } // memory allocation failed
   }
 
-  for (uint8_t i = 0; i < _sensorCount; i++)
+  for (uint8_t i = 0; i < sensorCount; i++)
   {
     _sensorPins[i] = pins[i];
   }
