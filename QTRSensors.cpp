@@ -675,15 +675,14 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
 
   switch (bank)
   {
-    case QTR_BANK_ALL:
-      // no change
+    case QTR_BANK_ALL:  // start = 0, step = 1 (no change)
       break;
 
-    case QTR_BANK_EVEN:
+    case QTR_BANK_EVEN: // start = 1, step = 2
       start = 1;
-      // fall through
+      // fall through to set step
 
-    case QTR_BANK_ODD:
+    case QTR_BANK_ODD:  // start = 0, step = 2
       step = 2;
       break;
 
@@ -711,17 +710,19 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
         digitalWrite(_sensorPins[i], LOW);  // important: disable internal pull-up!
       }
 
-      uint32_t startTime = micros();
-      uint16_t time = micros() - startTime;
-      while (time < _maxValue)
       {
-        time = micros() - startTime;
-        for (uint8_t i = start; i < _sensorCount; i += step)
+        uint32_t startTime = micros();
+        uint16_t time = 0;
+        while (time < _maxValue)
         {
-          if ((digitalRead(_sensorPins[i]) == LOW) && (time < sensorValues[i]))
+          time = micros() - startTime;
+          for (uint8_t i = start; i < _sensorCount; i += step)
           {
-            // record the first time the line reads low
-            sensorValues[i] = time;
+            if ((digitalRead(_sensorPins[i]) == LOW) && (time < sensorValues[i]))
+            {
+              // record the first time the line reads low
+              sensorValues[i] = time;
+            }
           }
         }
       }
