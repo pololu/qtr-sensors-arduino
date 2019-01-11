@@ -77,6 +77,7 @@ void QTRSensors::setEmitterPin(uint8_t emitterPin)
 
   _oddEmitterPin = emitterPin;
   pinMode(_oddEmitterPin, OUTPUT);
+
   _emitterPinCount = 1;
 }
 
@@ -88,6 +89,7 @@ void QTRSensors::setEmitterPins(uint8_t oddEmitterPin, uint8_t evenEmitterPin)
   _evenEmitterPin = evenEmitterPin;
   pinMode(_oddEmitterPin, OUTPUT);
   pinMode(_evenEmitterPin, OUTPUT);
+
   _emitterPinCount = 2;
 }
 
@@ -104,6 +106,8 @@ void QTRSensors::releaseEmitterPins()
     pinMode(_evenEmitterPin, INPUT);
     _evenEmitterPin = QTR_NO_EMITTER_PIN;
   }
+
+  _emitterPinCount = 0;
 }
 
 // Sets the dimming level (0-31). A dimming level of 0 corresponds
@@ -136,7 +140,9 @@ void QTRSensors::emittersOff(uint8_t bank, bool wait)
   // - 2 emitter pins, bank = odd
   if (bank == QTR_BANK_ALL || (_emitterPinCount == 2 && bank == QTR_BANK_ODD))
   {
-    if (_oddEmitterPin != QTR_NO_EMITTER_PIN)
+    // Check if pin is defined and only turn off if not already off
+    if ((_oddEmitterPin != QTR_NO_EMITTER_PIN) &&
+        (digitalRead(_oddEmitterPin) == HIGH))
     {
       digitalWrite(_oddEmitterPin, LOW);
       pinChanged = true;
@@ -148,7 +154,9 @@ void QTRSensors::emittersOff(uint8_t bank, bool wait)
   // - 2 emitter pins, bank = even
   if (_emitterPinCount == 2 && (bank == QTR_BANK_ALL || bank == QTR_BANK_EVEN))
   {
-    if (_evenEmitterPin != QTR_NO_EMITTER_PIN)
+    // Check if pin is defined and only turn off if not already off
+    if ((_evenEmitterPin != QTR_NO_EMITTER_PIN) &&
+        (digitalRead(_evenEmitterPin) == HIGH))
     {
       digitalWrite(_evenEmitterPin, LOW);
       pinChanged = true;
@@ -180,7 +188,12 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
   // - 2 emitter pins, bank = odd
   if (bank == QTR_BANK_ALL || (_emitterPinCount == 2 && bank == QTR_BANK_ODD))
   {
-    if (_oddEmitterPin != QTR_NO_EMITTER_PIN)
+    // Check if pin is defined, and only turn on non-dimmable sensors if not
+    // already on, but always turn dimmable sensors off and back on because
+    // we might be changing the dimming level (emittersOnWithPin() should take
+    // care of this)
+    if ((_oddEmitterPin != QTR_NO_EMITTER_PIN) &&
+        ( _dimmable || (digitalRead(_oddEmitterPin) == LOW)))
     {
       emittersOnStart = emittersOnWithPin(_oddEmitterPin);
       pinChanged = true;
@@ -192,7 +205,12 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
   // - 2 emitter pins, bank = even
   if (_emitterPinCount == 2 && (bank == QTR_BANK_ALL || bank == QTR_BANK_EVEN))
   {
-    if (_evenEmitterPin != QTR_NO_EMITTER_PIN)
+    // Check if pin is defined, and only turn on non-dimmable sensors if not
+    // already on, but always turn dimmable sensors off and back on because
+    // we might be changing the dimming level (emittersOnWithPin() should take
+    // care of this)
+    if ((_evenEmitterPin != QTR_NO_EMITTER_PIN) &&
+        (_dimmable || (digitalRead(_evenEmitterPin) == LOW)))
     {
       emittersOnStart = emittersOnWithPin(_evenEmitterPin);
       pinChanged = true;
