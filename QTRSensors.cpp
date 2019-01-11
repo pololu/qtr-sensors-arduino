@@ -698,27 +698,39 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
       for (uint8_t i = start; i < _sensorCount; i += step)
       {
         sensorValues[i] = _maxValue;
-        pinMode(_sensorPins[i], OUTPUT);    // make sensor line an output (drives low briefly, but doesn't matter)
-        digitalWrite(_sensorPins[i], HIGH); // drive sensor line high
+        // make sensor line an output (drives low briefly, but doesn't matter)
+        pinMode(_sensorPins[i], OUTPUT);
+        // drive sensor line high
+        digitalWrite(_sensorPins[i], HIGH);
       }
 
-      delayMicroseconds(10);                // charge lines for 10 us
-
-      noInterrupts(); // disable interrupts so we can switch all the pins as close to the same time as possible
-
-      for (uint8_t i = start; i < _sensorCount; i += step)
-      {
-        pinMode(_sensorPins[i], INPUT);     // make sensor line an input (should also ensure pull-up is disabled)
-      }
+      delayMicroseconds(10); // charge lines for 10 us
 
       {
+        // disable interrupts so we can switch all the pins as close to the same
+        // time as possible
+        noInterrupts();
+
+        // record start time before the first sensor is switched to input
+        // (similarly, time is checked before the first sensor is read in the
+        // loop below)
         uint32_t startTime = micros();
         uint16_t time = 0;
 
-        interrupts(); // re-enable interrupts
+        for (uint8_t i = start; i < _sensorCount; i += step)
+        {
+          // make sensor line an input (should also ensure pull-up is disabled)
+          pinMode(_sensorPins[i], INPUT);
+        }
+
+        interrupts(); // re-enable
 
         while (time < _maxValue)
         {
+          // disable interrupts so we can read all the pins as close to the same
+          // time as possible
+          noInterrupts();
+
           time = micros() - startTime;
           for (uint8_t i = start; i < _sensorCount; i += step)
           {
@@ -728,6 +740,8 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
               sensorValues[i] = time;
             }
           }
+
+          interrupts(); // re-enable
         }
       }
       return;
@@ -743,7 +757,8 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
       {
         for (uint8_t i = start; i < _sensorCount; i += step)
         {
-          sensorValues[i] += analogRead(_sensorPins[i]); // add the conversion result
+          // add the conversion result
+          sensorValues[i] += analogRead(_sensorPins[i]);
         }
       }
 
