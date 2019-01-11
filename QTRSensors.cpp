@@ -361,8 +361,8 @@ void QTRSensors::calibrate(uint8_t readMode)
       readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF ||
       readMode == QTR_EMITTERS_OFF)
   {
-      calibrateOnOrOff(&calibratedMinimumOff, &calibratedMaximumOff,
-                       QTR_EMITTERS_OFF);
+    calibrateOnOrOff(&calibratedMinimumOff, &calibratedMaximumOff,
+                     QTR_EMITTERS_OFF);
   }
 }
 
@@ -371,9 +371,9 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
                                   uint16_t **calibratedMaximum,
                                   uint8_t readMode)
 {
-  uint16_t sensorValues[16];
-  uint16_t maxSensorValues[16];
-  uint16_t minSensorValues[16];
+  uint16_t sensorValues[QTR_MAX_SENSORS];
+  uint16_t maxSensorValues[QTR_MAX_SENSORS];
+  uint16_t minSensorValues[QTR_MAX_SENSORS];
 
   // Allocate the arrays if necessary.
   if (*calibratedMaximum == nullptr)
