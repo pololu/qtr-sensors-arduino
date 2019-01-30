@@ -1,54 +1,23 @@
-//#include <stdlib.h>
 #include "QTRSensors.h"
 #include <Arduino.h>
 
-// Base class constructor
-QTRSensors::QTRSensors() :
-  _type(QTR_TYPE_UNDEFINED),
-  _sensorPins(nullptr),
-  _sensorCount(0),
-  _timeout(QTR_RC_DEFAULT_TIMEOUT),
-  _maxValue(QTR_RC_DEFAULT_TIMEOUT),
-  _samplesPerSensor(4),
-  _emitterPinCount(0),
-  _oddEmitterPin(QTR_NO_EMITTER_PIN),
-  _evenEmitterPin(QTR_NO_EMITTER_PIN),
-  _dimmable(true), // TODO decide if this should default to false
-  _dimmingLevel(0),
-  _lastPosition(0),
-  calibratedMinimumOn(nullptr),
-  calibratedMaximumOn(nullptr),
-  calibratedMinimumOff(nullptr),
-  calibratedMaximumOff(nullptr)
+void QTRSensors::setTypeRC()
 {
-    // empty
+  _type = Type::RC;
+  _maxValue = _timeout;
 }
 
-
-void QTRSensors::setType(uint8_t type)
+void QTRSensors::setTypeAnalog()
 {
-  switch (type)
-  {
-    case QTR_TYPE_RC:
-      _type = QTR_TYPE_RC;
-      _maxValue = _timeout;
-      break;
-
-    case QTR_TYPE_ANALOG:
-      _type = QTR_TYPE_ANALOG;
-      _maxValue = 1023; // Arduino analogRead() returns a 10-bit value by default
-      break;
-
-    default:
-      _type = QTR_TYPE_UNDEFINED;
-  }
+  _type = Type::Analog;
+  _maxValue = 1023; // Arduino analogRead() returns a 10-bit value by default
 }
 
 void QTRSensors::setSensorPins(uint8_t *pins, uint8_t sensorCount)
 {
-  if (sensorCount > QTR_MAX_SENSORS)
+  if (sensorCount > MaxSensors)
   {
-    sensorCount = QTR_MAX_SENSORS;
+    sensorCount = MaxSensors;
   }
 
   if (_sensorPins == nullptr)
@@ -68,7 +37,7 @@ void QTRSensors::setSensorPins(uint8_t *pins, uint8_t sensorCount)
 void QTRSensors::setTimeout(uint16_t timeout)
 {
   _timeout = timeout;
-  if (_type == QTR_TYPE_RC) { _maxValue = timeout; }
+  if (_type == Type::RC) { _maxValue = timeout; }
 }
 
 void QTRSensors::setEmitterPin(uint8_t emitterPin)
@@ -95,16 +64,16 @@ void QTRSensors::setEmitterPins(uint8_t oddEmitterPin, uint8_t evenEmitterPin)
 
 void QTRSensors::releaseEmitterPins()
 {
-  if (_oddEmitterPin != QTR_NO_EMITTER_PIN)
+  if (_oddEmitterPin != NoEmitterPin)
   {
     pinMode(_oddEmitterPin, INPUT);
-    _oddEmitterPin = QTR_NO_EMITTER_PIN;
+    _oddEmitterPin = NoEmitterPin;
   }
 
-  if (_evenEmitterPin != QTR_NO_EMITTER_PIN)
+  if (_evenEmitterPin != NoEmitterPin)
   {
     pinMode(_evenEmitterPin, INPUT);
-    _evenEmitterPin = QTR_NO_EMITTER_PIN;
+    _evenEmitterPin = NoEmitterPin;
   }
 
   _emitterPinCount = 0;
@@ -126,22 +95,22 @@ void QTRSensors::setDimmingLevel(uint8_t dimmingLevel)
 
 // Turn the IR LEDs off and on.  These are mainly for use by the read
 // method, and calling these functions before or after reading the sensors
-// will have no effect on the readings unless the readMode is
-// QTR_EMITTERS_MANUAL, but you may wish to use these for testing purposes.
+// will have no effect on the readings unless the mode is
+// ReadMode::Manual, but you may wish to use these for testing purposes.
 //
-// bank defaults to QTR_BANK_ALL; wait defaults to true
-void QTRSensors::emittersOff(uint8_t bank, bool wait)
+// emitters defaults to Emitters::All; wait defaults to true
+void QTRSensors::emittersOff(Emitters emitters, bool wait)
 {
   bool pinChanged = false;
 
   // Use odd emitter pin in these cases:
-  // - 1 emitter pin, bank = all
-  // - 2 emitter pins, bank = all
-  // - 2 emitter pins, bank = odd
-  if (bank == QTR_BANK_ALL || (_emitterPinCount == 2 && bank == QTR_BANK_ODD))
+  // - 1 emitter pin, emitters = all
+  // - 2 emitter pins, emitters = all
+  // - 2 emitter pins, emitters = odd
+  if (emitters == Emitters::All || (_emitterPinCount == 2 && emitters == Emitters::Odd))
   {
     // Check if pin is defined and only turn off if not already off
-    if ((_oddEmitterPin != QTR_NO_EMITTER_PIN) &&
+    if ((_oddEmitterPin != NoEmitterPin) &&
         (digitalRead(_oddEmitterPin) == HIGH))
     {
       digitalWrite(_oddEmitterPin, LOW);
@@ -150,12 +119,12 @@ void QTRSensors::emittersOff(uint8_t bank, bool wait)
   }
 
   // Use even emitter pin in these cases:
-  // - 2 emitter pins, bank = all
-  // - 2 emitter pins, bank = even
-  if (_emitterPinCount == 2 && (bank == QTR_BANK_ALL || bank == QTR_BANK_EVEN))
+  // - 2 emitter pins, emitters = all
+  // - 2 emitter pins, emitters = even
+  if (_emitterPinCount == 2 && (emitters == Emitters::All || emitters == Emitters::Even))
   {
     // Check if pin is defined and only turn off if not already off
-    if ((_evenEmitterPin != QTR_NO_EMITTER_PIN) &&
+    if ((_evenEmitterPin != NoEmitterPin) &&
         (digitalRead(_evenEmitterPin) == HIGH))
     {
       digitalWrite(_evenEmitterPin, LOW);
@@ -177,22 +146,22 @@ void QTRSensors::emittersOff(uint8_t bank, bool wait)
   }
 }
 
-void QTRSensors::emittersOn(uint8_t bank, bool wait)
+void QTRSensors::emittersOn(Emitters emitters, bool wait)
 {
   bool pinChanged = false;
   uint16_t emittersOnStart;
 
   // Use odd emitter pin in these cases:
-  // - 1 emitter pin, bank = all
-  // - 2 emitter pins, bank = all
-  // - 2 emitter pins, bank = odd
-  if (bank == QTR_BANK_ALL || (_emitterPinCount == 2 && bank == QTR_BANK_ODD))
+  // - 1 emitter pin, emitters = all
+  // - 2 emitter pins, emitters = all
+  // - 2 emitter pins, emitters = odd
+  if (emitters == Emitters::All || (_emitterPinCount == 2 && emitters == Emitters::Odd))
   {
     // Check if pin is defined, and only turn on non-dimmable sensors if not
     // already on, but always turn dimmable sensors off and back on because
     // we might be changing the dimming level (emittersOnWithPin() should take
     // care of this)
-    if ((_oddEmitterPin != QTR_NO_EMITTER_PIN) &&
+    if ((_oddEmitterPin != NoEmitterPin) &&
         ( _dimmable || (digitalRead(_oddEmitterPin) == LOW)))
     {
       emittersOnStart = emittersOnWithPin(_oddEmitterPin);
@@ -201,15 +170,15 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
   }
 
   // Use even emitter pin in these cases:
-  // - 2 emitter pins, bank = all
-  // - 2 emitter pins, bank = even
-  if (_emitterPinCount == 2 && (bank == QTR_BANK_ALL || bank == QTR_BANK_EVEN))
+  // - 2 emitter pins, emitters = all
+  // - 2 emitter pins, emitters = even
+  if (_emitterPinCount == 2 && (emitters == Emitters::All || emitters == Emitters::Even))
   {
     // Check if pin is defined, and only turn on non-dimmable sensors if not
     // already on, but always turn dimmable sensors off and back on because
     // we might be changing the dimming level (emittersOnWithPin() should take
     // care of this)
-    if ((_evenEmitterPin != QTR_NO_EMITTER_PIN) &&
+    if ((_evenEmitterPin != NoEmitterPin) &&
         (_dimmable || (digitalRead(_evenEmitterPin) == LOW)))
     {
       emittersOnStart = emittersOnWithPin(_evenEmitterPin);
@@ -236,7 +205,7 @@ void QTRSensors::emittersOn(uint8_t bank, bool wait)
   }
 }
 
-// assumes pin is valid (not QTR_NO_EMITTER_PIN)
+// assumes pin is valid (not NoEmitterPin)
 // returns time when pin was first set high
 uint16_t QTRSensors::emittersOnWithPin(uint8_t pin)
 {
@@ -271,29 +240,29 @@ uint16_t QTRSensors::emittersOnWithPin(uint8_t pin)
   return emittersOnStart;
 }
 
-// Turns on the selected bank and turns off the other bank with optimized
+// Turns on the selected emitters and turns off the other emitters with optimized
 // timing (no unnecessary waits compared to calling emittersOff and
-// emittersOn separately, but still waits for both banks of emitters to be
+// emittersOn separately, but still waits for both emitterss of emitters to be
 // in the right states before returning).
-void QTRSensors::emitterBankSelect(uint8_t bank)
+void QTRSensors::EmittersSelect(Emitters emitters)
 {
-  uint8_t offBank;
+  Emitters offEmitters;
 
-  switch (bank)
+  switch (emitters)
   {
-    case QTR_BANK_ODD:
-      offBank = QTR_BANK_EVEN;
+    case Emitters::Odd:
+      offEmitters = Emitters::Even;
       break;
 
-    case QTR_BANK_EVEN:
-      offBank = QTR_BANK_ODD;
+    case Emitters::Even:
+      offEmitters = Emitters::Odd;
       break;
 
-    case QTR_BANK_ALL:
+    case Emitters::All:
       emittersOn();
       return;
 
-    case QTR_BANK_NONE:
+    case Emitters::None:
       emittersOff();
       return;
 
@@ -301,19 +270,19 @@ void QTRSensors::emitterBankSelect(uint8_t bank)
       return;
   }
 
-  // Turn off the off-bank; don't wait before proceeding, but record the time.
-  emittersOff(offBank, false);
+  // Turn off the off-emitters; don't wait before proceeding, but record the time.
+  emittersOff(offEmitters, false);
   uint16_t turnOffStart = micros();
 
-  // Turn on the on-bank and wait.
-  emittersOn(bank);
+  // Turn on the on-emitters and wait.
+  emittersOn(emitters);
 
   if (_dimmable)
   {
-    // Finish waiting for the off-bank emitters to turn off: make sure it's been
-    // at least 1200 us since the off-bank was turned off before returning.
+    // Finish waiting for the off-emitters emitters to turn off: make sure it's been
+    // at least 1200 us since the off-emitters was turned off before returning.
     // (Driver min is 1 ms.) Some time has already passed while we waited for
-    // the on-bank to turn on.
+    // the on-emitters to turn on.
     while ((uint16_t)(micros() - turnOffStart) < 1200)
     {
       delayMicroseconds(10);
@@ -339,41 +308,41 @@ void QTRSensors::resetCalibration()
 // calibration.  The sensor values are not returned; instead, the
 // maximum and minimum values found over time are stored internally
 // and used for the readCalibrated() method.
-void QTRSensors::calibrate(uint8_t readMode)
+void QTRSensors::calibrate(ReadMode mode)
 {
   // manual emitter control is not supported
-  if (readMode == QTR_EMITTERS_MANUAL) { return; }
+  if (mode == ReadMode::Manual) { return; }
 
-  if (readMode == QTR_EMITTERS_ON ||
-      readMode == QTR_EMITTERS_ON_AND_OFF)
+  if (mode == ReadMode::On ||
+      mode == ReadMode::OnAndOff)
   {
     calibrateOnOrOff(&calibratedMinimumOn, &calibratedMaximumOn,
-                     QTR_EMITTERS_ON);
+                     ReadMode::On);
   }
-  else if (readMode == QTR_EMITTERS_ODD_EVEN ||
-           readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
+  else if (mode == ReadMode::OddEven ||
+           mode == ReadMode::OddEvenAndOff)
   {
     calibrateOnOrOff(&calibratedMinimumOn, &calibratedMaximumOn,
-                     QTR_EMITTERS_ODD_EVEN);
+                     ReadMode::OddEven);
   }
 
-  if (readMode == QTR_EMITTERS_ON_AND_OFF ||
-      readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF ||
-      readMode == QTR_EMITTERS_OFF)
+  if (mode == ReadMode::OnAndOff ||
+      mode == ReadMode::OddEvenAndOff ||
+      mode == ReadMode::Off)
   {
     calibrateOnOrOff(&calibratedMinimumOff, &calibratedMaximumOff,
-                     QTR_EMITTERS_OFF);
+                     ReadMode::Off);
   }
 }
 
 
 void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
                                   uint16_t **calibratedMaximum,
-                                  uint8_t readMode)
+                                  ReadMode mode)
 {
-  uint16_t sensorValues[QTR_MAX_SENSORS];
-  uint16_t maxSensorValues[QTR_MAX_SENSORS];
-  uint16_t minSensorValues[QTR_MAX_SENSORS];
+  uint16_t sensorValues[MaxSensors];
+  uint16_t maxSensorValues[MaxSensors];
+  uint16_t minSensorValues[MaxSensors];
 
   // Allocate the arrays if necessary.
   if (*calibratedMaximum == nullptr)
@@ -405,7 +374,7 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
 
   for (uint8_t j = 0; j < 10; j++)
   {
-    read(sensorValues, readMode);
+    read(sensorValues, mode);
 
     for (uint8_t i = 0; i < _sensorCount; i++)
     {
@@ -452,38 +421,38 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
 // The values returned are a measure of the reflectance in abstract units,
 // with higher values corresponding to lower reflectance (e.g. a black
 // surface or a void).
-void QTRSensors::read(uint16_t *sensorValues, uint8_t readMode)
+void QTRSensors::read(uint16_t *sensorValues, ReadMode mode)
 {
-  switch (readMode)
+  switch (mode)
   {
-    case QTR_EMITTERS_OFF:
+    case ReadMode::Off:
       emittersOff();
       // fall through
 
-    case QTR_EMITTERS_MANUAL:
+    case ReadMode::Manual:
       readPrivate(sensorValues);
       return;
 
-    case QTR_EMITTERS_ON:
-    case QTR_EMITTERS_ON_AND_OFF:
+    case ReadMode::On:
+    case ReadMode::OnAndOff:
       emittersOn();
       readPrivate(sensorValues);
       emittersOff();
       break;
 
-    case QTR_EMITTERS_ODD_EVEN:
-    case QTR_EMITTERS_ODD_EVEN_AND_OFF:
+    case ReadMode::OddEven:
+    case ReadMode::OddEvenAndOff:
       // Turn on odd emitters and read the odd-numbered sensors.
       // (readPrivate takes a 0-based array index, so start = 0 to start with
       // the first sensor)
-      emitterBankSelect(QTR_BANK_ODD);
-      readPrivate(sensorValues, QTR_BANK_ODD);
+      EmittersSelect(Emitters::Odd);
+      readPrivate(sensorValues, 0, 2);
 
       // Turn on even emitters and read the even-numbered sensors.
       // (readPrivate takes a 0-based array index, so start = 1 to start with
       // the second sensor)
-      emitterBankSelect(QTR_BANK_EVEN);
-      readPrivate(sensorValues, QTR_BANK_EVEN);
+      EmittersSelect(Emitters::Even);
+      readPrivate(sensorValues, 1, 2);
 
       emittersOff();
       break;
@@ -492,12 +461,12 @@ void QTRSensors::read(uint16_t *sensorValues, uint8_t readMode)
       return;
   }
 
-  if (readMode == QTR_EMITTERS_ON_AND_OFF ||
-      readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
+  if (mode == ReadMode::OnAndOff ||
+      mode == ReadMode::OddEvenAndOff)
   {
     // Take a second set of readings and return the values (on + max - off).
 
-    uint16_t offValues[QTR_MAX_SENSORS];
+    uint16_t offValues[MaxSensors];
     readPrivate(offValues);
 
     for (uint8_t i = 0; i < _sensorCount; i++)
@@ -513,16 +482,16 @@ void QTRSensors::read(uint16_t *sensorValues, uint8_t readMode)
 // corresponds to the maximum value.  Calibration values are
 // stored separately for each sensor, so that differences in the
 // sensors are accounted for automatically.
-void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
+void QTRSensors::readCalibrated(uint16_t *sensorValues, ReadMode mode)
 {
   // manual emitter control is not supported
-  if (readMode == QTR_EMITTERS_MANUAL) { return; }
+  if (mode == ReadMode::Manual) { return; }
 
   // if not calibrated, do nothing
 
-  if (readMode == QTR_EMITTERS_ON ||
-      readMode == QTR_EMITTERS_ON_AND_OFF ||
-      readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
+  if (mode == ReadMode::On ||
+      mode == ReadMode::OnAndOff ||
+      mode == ReadMode::OddEvenAndOff)
   {
     if ((calibratedMinimumOn == nullptr) || (calibratedMaximumOn == nullptr))
     {
@@ -530,9 +499,9 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
     }
   }
 
-  if (readMode == QTR_EMITTERS_OFF ||
-      readMode == QTR_EMITTERS_ON_AND_OFF ||
-      readMode == QTR_EMITTERS_ODD_EVEN_AND_OFF)
+  if (mode == ReadMode::Off ||
+      mode == ReadMode::OnAndOff ||
+      mode == ReadMode::OddEvenAndOff)
   {
     if ((calibratedMinimumOff == nullptr) || (calibratedMaximumOff == nullptr))
     {
@@ -541,25 +510,25 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
   }
 
   // read the needed values
-  read(sensorValues, readMode);
+  read(sensorValues, mode);
 
   for (uint8_t i = 0; i < _sensorCount; i++)
   {
     uint16_t calmin, calmax;
 
     // find the correct calibration
-    if (readMode == QTR_EMITTERS_ON ||
-        readMode == QTR_EMITTERS_ODD_EVEN)
+    if (mode == ReadMode::On ||
+        mode == ReadMode::OddEven)
     {
       calmax = calibratedMaximumOn[i];
       calmin = calibratedMinimumOn[i];
     }
-    else if (readMode == QTR_EMITTERS_OFF)
+    else if (mode == ReadMode::Off)
     {
       calmax = calibratedMaximumOff[i];
       calmin = calibratedMinimumOff[i];
     }
-    else // QTR_EMITTERS_ON_AND_OFF, QTR_EMITTERS_ODD_EVEN_AND_OFF
+    else // ReadMode::OnAndOff, ReadMode::OddEvenAndOff
     {
       if (calibratedMinimumOff[i] < calibratedMinimumOn[i])
       {
@@ -599,76 +568,6 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, uint8_t readMode)
   }
 }
 
-
-// Operates the same as read calibrated, but also returns an
-// estimated position of the robot with respect to a line. The
-// estimate is made using a weighted average of the sensor indices
-// multiplied by 1000, so that a return value of 0 indicates that
-// the line is directly below sensor 0, a return value of 1000
-// indicates that the line is directly below sensor 1, 2000
-// indicates that it's below sensor 2000, etc.  Intermediate
-// values indicate that the line is between two sensors.  The
-// formula is:
-//
-//    0*value0 + 1000*value1 + 2000*value2 + ...
-//   --------------------------------------------
-//         value0  +  value1  +  value2 + ...
-//
-// By default, this function assumes a dark line (high values)
-// surrounded by white (low values).  If your line is light on
-// black, set the optional second argument whiteLine to true.  In
-// this case, each sensor value will be replaced by (1000-value)
-// before the averaging.
-int QTRSensors::readLine(uint16_t *sensorValues, uint8_t readMode,
-                         uint8_t whiteLine)
-{
-  bool onLine = false;
-  uint32_t avg = 0; // this is for the weighted total
-  uint16_t sum = 0; // this is for the denominator, which is <= 64000
-
-  // manual emitter control is not supported
-  if (readMode == QTR_EMITTERS_MANUAL) { return; }
-
-  readCalibrated(sensorValues, readMode);
-
-  avg = 0;
-  sum = 0;
-
-  for (uint8_t i = 0; i < _sensorCount; i++)
-  {
-    uint16_t value = sensorValues[i];
-    if (whiteLine) { value = 1000 - value; }
-
-    // keep track of whether we see the line at all
-    if (value > 200) { onLine = true; }
-
-    // only average in values that are above a noise threshold
-    if (value > 50)
-    {
-      avg += (uint32_t)value * (i * 1000);
-      sum += value;
-    }
-  }
-
-  if (!onLine)
-  {
-    // If it last read to the left of center, return 0.
-    if (_lastPosition < (_sensorCount - 1) * 1000 / 2)
-    {
-      return 0;
-    }
-    // If it last read to the right of center, return the max.
-    else
-    {
-      return (_sensorCount - 1) * 1000;
-    }
-  }
-
-  _lastPosition = avg / sum;
-  return _lastPosition;
-}
-
-
 // Reads the sensor values into an array. There *MUST* be space
 // for as many values as there were sensors specified in the constructor.
 // Example usage:
@@ -685,34 +584,14 @@ int QTRSensors::readLine(uint16_t *sensorValues, uint8_t readMode,
 // sensor). For example, step = 2, start = 1 means read the *even-numbered*
 // sensors.
 
-// bank defaults to QTR_BANK_ALL
-void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
+// emitters defaults to Emitters::All
+void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t start, uint8_t step)
 {
-  // starting value and increment for sensorValues array index
-  uint8_t start = 0, step = 1;
-
-  switch (bank)
-  {
-    case QTR_BANK_ALL:  // start = 0, step = 1 (no change)
-      break;
-
-    case QTR_BANK_EVEN: // start = 1, step = 2
-      start = 1;
-      // fall through to set step
-
-    case QTR_BANK_ODD:  // start = 0, step = 2
-      step = 2;
-      break;
-
-    default: // QTR_BANK_NONE or invalid - do nothing
-      return;
-  }
-
   if (_sensorPins == nullptr) { return; }
 
   switch (_type)
   {
-    case QTR_TYPE_RC:
+    case Type::RC:
       for (uint8_t i = start; i < _sensorCount; i += step)
       {
         sensorValues[i] = _maxValue;
@@ -764,7 +643,7 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
       }
       return;
 
-    case QTR_TYPE_ANALOG:
+    case Type::Analog:
       // reset the values
       for (uint8_t i = start; i < _sensorCount; i += step)
       {
@@ -793,6 +672,54 @@ void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t bank)
   }
 }
 
+int QTRSensors::readLinePrivate(uint16_t *sensorValues, ReadMode mode,
+                         bool invertReadings)
+{
+  bool onLine = false;
+  uint32_t avg = 0; // this is for the weighted total
+  uint16_t sum = 0; // this is for the denominator, which is <= 64000
+
+  // manual emitter control is not supported
+  if (mode == ReadMode::Manual) { return; }
+
+  readCalibrated(sensorValues, mode);
+
+  avg = 0;
+  sum = 0;
+
+  for (uint8_t i = 0; i < _sensorCount; i++)
+  {
+    uint16_t value = sensorValues[i];
+    if (invertReadings) { value = 1000 - value; }
+
+    // keep track of whether we see the line at all
+    if (value > 200) { onLine = true; }
+
+    // only average in values that are above a noise threshold
+    if (value > 50)
+    {
+      avg += (uint32_t)value * (i * 1000);
+      sum += value;
+    }
+  }
+
+  if (!onLine)
+  {
+    // If it last read to the left of center, return 0.
+    if (_lastPosition < (_sensorCount - 1) * 1000 / 2)
+    {
+      return 0;
+    }
+    // If it last read to the right of center, return the max.
+    else
+    {
+      return (_sensorCount - 1) * 1000;
+    }
+  }
+
+  _lastPosition = avg / sum;
+  return _lastPosition;
+}
 
 // the destructor frees up allocated memory
 QTRSensors::~QTRSensors()
@@ -800,8 +727,8 @@ QTRSensors::~QTRSensors()
   releaseEmitterPins();
 
   if (_sensorPins)          { free(_sensorPins); }
-  if (calibratedMaximumOn)   { free(calibratedMaximumOn); }
-  if (calibratedMaximumOff)  { free(calibratedMaximumOff); }
-  if (calibratedMinimumOn)   { free(calibratedMinimumOn); }
-  if (calibratedMinimumOff)  { free(calibratedMinimumOff); }
+  if (calibratedMaximumOn)  { free(calibratedMaximumOn); }
+  if (calibratedMaximumOff) { free(calibratedMaximumOff); }
+  if (calibratedMinimumOn)  { free(calibratedMinimumOn); }
+  if (calibratedMinimumOff) { free(calibratedMinimumOff); }
 }

@@ -1,55 +1,53 @@
+/// @file QTRSensors.h
+
 /*
   QTRSensors - library for using Pololu QTR reflectance sensors and reflectance
-    sensor arrays.  The object used is determined by the type of the sensor
-    (analog or RC; dimmable or non-dimmable).  Then simply specify in the
-    constructor which Arduino I/O pins are connected to a QTR sensor, and the
-    read() method will obtain reflectance measurements for those sensors.
-    Smaller sensor values correspond to higher reflectance (e.g.  white) while
-    larger sensor values correspond to lower reflectance (e.g.  black or a
-    void).
-
-    * QTRSensorsRC should be used for original (non-dimmable) QTR-xRC sensors.
-    * QTRSensorsAnalog should be used for original (non-dimmable) QTR-xA sensors.
-    * QTRDimmableRC should be used for dimmable QTR-xD-xRC and QTRX-xD-xRC sensors.
-    * QTRDimmableAnalog should be used for dimmable QTR-xD-xA and QTRX-xD-xA sensors.
+    sensor arrays
 */
 
 #pragma once
 
 #include <stdint.h>
 
-#define QTR_EMITTERS_OFF              0
-#define QTR_EMITTERS_ON               1
-#define QTR_EMITTERS_ON_AND_OFF       2
-#define QTR_EMITTERS_ODD_EVEN         3
-#define QTR_EMITTERS_ODD_EVEN_AND_OFF 4
-#define QTR_EMITTERS_MANUAL           5
-
-#define QTR_NO_EMITTER_PIN  255
-
-#define QTR_TYPE_UNDEFINED  0
-#define QTR_TYPE_RC         1
-#define QTR_TYPE_ANALOG     2
-
-#define QTR_RC_DEFAULT_TIMEOUT 2500
-
-#define QTR_BANK_ALL  0
-#define QTR_BANK_ODD  1
-#define QTR_BANK_EVEN 2
-#define QTR_BANK_NONE 3
-
-#define QTR_MAX_SENSORS 31
-
 class QTRSensors
 {
   public:
 
-    QTRSensors();
+    enum class ReadMode : uint8_t {
+      Off,
+      On,
+      OnAndOff,
+      OddEven,
+      OddEvenAndOff,
+      Manual
+    };
+
+    enum class Type : uint8_t {
+      Undefined,
+      RC,
+      Analog
+    };
+
+    enum class Emitters : uint8_t {
+      All,
+      Odd,
+      Even,
+      None
+    };
+
+    const uint8_t NoEmitterPin = 255;
+
+    const uint16_t RCDefaultTimeout = 2500;
+
+    const uint8_t MaxSensors = 31;
+
+    QTRSensors() = default;
 
     ~QTRSensors();
 
-    void setType(uint8_t type);
-    uint8_t getType() { return _type; }
+    void setTypeRC();
+    void setTypeAnalog();
+    Type getType() { return _type; }
 
     void setSensorPins(uint8_t *pins, uint8_t sensorCount);
 
@@ -68,8 +66,9 @@ class QTRSensors
     uint8_t getOddEmitterPin() { return _oddEmitterPin; }
     uint8_t getEvenEmitterPin()  { return _evenEmitterPin; }
 
-    void setDimmable(bool dimmable) { _dimmable = dimmable; }
-    bool getDimmable() { return _dimmable; }
+    void setDimmable() { _dimmable = true; }
+    void setNonDimmable() { _dimmable = false; }
+    bool isDimmable() { return _dimmable; }
 
     // Sets and gets the dimming level (0-31). A dimming level of 0 corresponds
     // to full current and brightness, with higher dimming levels meaning lower
@@ -77,74 +76,93 @@ class QTRSensors
     void setDimmingLevel(uint8_t dimmingLevel);
     uint8_t getDimmingLevel() { return _dimmingLevel; }
 
-
     // Turn the IR LEDs off and on.  These are mainly for use by the read
     // method, and calling these functions before or after reading the sensors
     // will have no effect on the readings unless the readMode is
     // QTR_EMITTERS_MANUAL, but you may wish to use these for testing purposes.
-    void emittersOff(uint8_t bank = QTR_BANK_ALL, bool wait = true);
-    void emittersOn(uint8_t bank = QTR_BANK_ALL, bool wait = true);
+    void emittersOff(Emitters emitters = Emitters::All, bool wait = true);
+    void emittersOn(Emitters emitters = Emitters::All, bool wait = true);
 
-    // Turns on the selected bank and turns off the other bank with optimized
+    // Turns on the selected emitters and turns off the other emitters with optimized
     // timing (no unnecessary waits compared to calling emittersOff and
-    // emittersOn separately, but still waits for both banks of emitters to be
+    // emittersOn separately, but still waits for both emitterss of emitters to be
     // in the right states before returning).
-    void emitterBankSelect(uint8_t bank);
-
+    void EmittersSelect(Emitters emitters);
 
     // Reads the sensors for calibration.  The sensor values are
     // not returned; instead, the maximum and minimum values found
     // over time are stored internally and used for the
     // readCalibrated() method.
-    void calibrate(uint8_t readMode = QTR_EMITTERS_ON);
+    void calibrate(ReadMode mode = ReadMode::On);
 
     // Resets all calibration that has been done.
     void resetCalibration();
 
+    /// @brief Reads the raw sensor values into an array.
+    ///
+    /// There **MUST** be space in the @p sensorValues array for as many values
+    /// as there were sensors specified in the constructor.
+    ///
+    /// Example usage:
+    /// ~~~{.cpp}
+    /// unsigned int sensorValues[8];
+    /// qtr.read(sensorValues);
+    /// ~~~
+    ///
+    /// The values returned are a measure of the reflectance in abstract units,
+    /// with higher values corresponding to lower reflectance (e.g. a black
+    /// surface or a void).
+    ///
+    /// Analog-type sensors will return a raw value between 0 and 1023 (like
+    /// Arduino's `analogRead()` function).
+    ///
+    /// RC-type sensors will return a raw value between 0 and the \p timeout
+    /// setting configured with `setTimeout()` (which defaults to 2500).
+    ///
+    /// The functions that read values from the sensors all take an argument @p
+    /// readMode, which specifies the kind of read that will be performed.
+    /// Several options are defined @ref ReadModes
+    ///
+    /// * #QTR_EMITTERS_OFF specifies that the reading should be made without
+    /// turning on the infrared (IR) emitters, in which case the reading
+    /// represents ambient light levels near the sensor.
+    ///
+    void read(uint16_t *sensorValues, ReadMode mode = ReadMode::On);
 
-    // Reads the sensor values into an array. There *MUST* be space
-    // for as many values as there were sensors specified in the constructor.
-    // Example usage:
-    // uint16_t sensorValues[8];
-    // sensors.read(sensorValues);
-    // The values returned are a measure of the reflectance in abstract units,
-    // with higher values corresponding to lower reflectance (e.g. a black
-    // surface or a void).
-    // If measureOffAndOn is true, measures the values with the
-    // emitters on AND off and returns on - (timeout - off).  If this
-    // value is less than zero, it returns zero.
-    // This method will call the appropriate derived class's readPrivate(),
-    // which is defined as a virtual function in the base class and
-    // overridden by each derived class's own implementation.
-    void read(uint16_t *sensorValues, uint8_t readMode = QTR_EMITTERS_ON);
+    /// @brief Reads the sensors and provides calibrated values between 0 and
+    /// 1000.
+    ///
+    /// 0 corresponds to the minimum value read by `calibrate()` and 1000
+    /// corresponds to the maximum value.  Calibration values are
+    /// stored separately for each sensor, so that differences in the
+    /// sensors are accounted for automatically.
+    void readCalibrated(uint16_t *sensorValues, ReadMode mode = ReadMode::On);
 
-    // Returns values calibrated to a value between 0 and 1000, where
-    // 0 corresponds to the minimum value read by calibrate() and 1000
-    // corresponds to the maximum value.  Calibration values are
-    // stored separately for each sensor, so that differences in the
-    // sensors are accounted for automatically.
-    void readCalibrated(uint16_t *sensorValues, uint8_t readMode = QTR_EMITTERS_ON);
+    /// @brief Reads the sensors, provides calibrated values, and returns an
+    /// estimated line position (black line on white background).
+    ///
+    /// The estimate is made using a weighted average of the sensor indices
+    /// multiplied by 1000, so that a return value of 0 indicates that
+    /// the line is directly below sensor 0, a return value of 1000
+    /// indicates that the line is directly below sensor 1, 2000
+    /// indicates that it's below sensor 2000, etc.  Intermediate
+    /// values indicate that the line is between two sensors.  The
+    /// formula is:
+    ///
+    ///    0*value0 + 1000*value1 + 2000*value2 + ...
+    ///   --------------------------------------------
+    ///         value0  +  value1  +  value2 + ...
+    uint16_t readLineBlack(uint16_t *sensorValues, ReadMode mode = ReadMode::On)
+    {
+      readLinePrivate(sensorValues, mode, false);
+    }
 
-    // Operates the same as read calibrated, but also returns an
-    // estimated position of the robot with respect to a line. The
-    // estimate is made using a weighted average of the sensor indices
-    // multiplied by 1000, so that a return value of 0 indicates that
-    // the line is directly below sensor 0, a return value of 1000
-    // indicates that the line is directly below sensor 1, 2000
-    // indicates that it's below sensor 2000, etc.  Intermediate
-    // values indicate that the line is between two sensors.  The
-    // formula is:
-    //
-    //    0*value0 + 1000*value1 + 2000*value2 + ...
-    //   --------------------------------------------
-    //         value0  +  value1  +  value2 + ...
-    //
-    // By default, this function assumes a dark line (high values)
-    // surrounded by white (low values).  If your line is light on
-    // black, set the optional second argument whiteLine to true.  In
-    // this case, each sensor value will be replaced by (1000-value)
-    // before the averaging.
-    int readLine(uint16_t *sensorValues, uint8_t readMode = QTR_EMITTERS_ON, uint8_t whiteLine = 0);
+    /// @brief Reads the sensors, provides calibrated values, and returns an
+    /// estimated line position (white line on black background).
+    uint16_t readLineWhite(uint16_t *sensorValues, ReadMode mode = ReadMode::On)
+    {
+      readLinePrivate(sensorValues, mode, true);
+    }
 
     // Calibrated minimum and maximum values. These start at 1000 and
     // 0, respectively, so that the very first sensor reading will
@@ -158,12 +176,13 @@ class QTRSensors
     // These variables are made public so that you can use them for
     // your own calculations and do things like saving the values to
     // EEPROM, performing sanity checking, etc.
-    uint16_t *calibratedMinimumOn;
-    uint16_t *calibratedMaximumOn;
-    uint16_t *calibratedMinimumOff;
-    uint16_t *calibratedMaximumOff;
+    uint16_t *calibratedMinimumOn = nullptr;
+    uint16_t *calibratedMaximumOn = nullptr;
+    uint16_t *calibratedMinimumOff = nullptr;
+    uint16_t *calibratedMaximumOff = nullptr;
 
   private:
+
     uint16_t emittersOnWithPin(uint8_t pin);
 
     // Handles the actual calibration. calibratedMinimum and
@@ -171,25 +190,28 @@ class QTRSensors
     // arrays, which will be allocated if necessary.
     void calibrateOnOrOff(uint16_t **calibratedMinimum,
                           uint16_t **calibratedMaximum,
-                          uint8_t readMode);
+                          ReadMode mode);
 
-    void readPrivate(uint16_t *sensorValues, uint8_t bank = QTR_BANK_ALL);
+    void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t start = 0, uint8_t step = 1);
 
-    uint8_t _type;
 
-    uint8_t *_sensorPins;
-    uint8_t _sensorCount;
+    int readLinePrivate(uint16_t *sensorValues, ReadMode mode, bool invertReadings);
 
-    uint16_t _timeout;
-    uint16_t _maxValue; // the maximum value returned by readPrivate()
-    uint8_t _samplesPerSensor; // only used for analog sensors
+    Type _type = Type::Undefined;
 
-    uint8_t _oddEmitterPin; // also used for single emitter pin
-    uint8_t _evenEmitterPin;
-    uint8_t _emitterPinCount;
+    uint8_t *_sensorPins = nullptr;
+    uint8_t _sensorCount = 0;
 
-    bool _dimmable;
-    uint8_t _dimmingLevel;
+    uint16_t _timeout = RCDefaultTimeout;
+    uint16_t _maxValue = RCDefaultTimeout; // the maximum value returned by readPrivate()
+    uint8_t _samplesPerSensor = 4; // only used for analog sensors
 
-    uint16_t _lastPosition;
+    uint8_t _oddEmitterPin = NoEmitterPin; // also used for single emitter pin
+    uint8_t _evenEmitterPin = NoEmitterPin;
+    uint8_t _emitterPinCount = 0;
+
+    bool _dimmable = true;
+    uint8_t _dimmingLevel = 0;
+
+    uint16_t _lastPosition = 0;
 };
