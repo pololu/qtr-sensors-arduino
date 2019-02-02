@@ -40,6 +40,12 @@ void QTRSensors::setTimeout(uint16_t timeout)
   if (_type == Type::RC) { _maxValue = timeout; }
 }
 
+void QTRSensors::setSamplesPerSensor(uint8_t samples)
+{
+  _samplesPerSensor = samples;
+  if (_samplesPerSensor > 64) { _samplesPerSensor = 64; }
+}
+
 void QTRSensors::setEmitterPin(uint8_t emitterPin)
 {
   releaseEmitterPins();
@@ -79,10 +85,6 @@ void QTRSensors::releaseEmitterPins()
   _emitterPinCount = 0;
 }
 
-// Sets the dimming level (0-31). A dimming level of 0 corresponds
-// to full current and brightness, with higher dimming levels meaning lower
-// currents; see the product page for your sensor for details. The dimming level
-// does not take effect until the next time emittersOn() is called.
 void QTRSensors::setDimmingLevel(uint8_t dimmingLevel)
 {
   if (dimmingLevel > 31)
@@ -92,12 +94,6 @@ void QTRSensors::setDimmingLevel(uint8_t dimmingLevel)
   _dimmingLevel = dimmingLevel;
 }
 
-
-// Turn the IR LEDs off and on.  These are mainly for use by the read
-// method, and calling these functions before or after reading the sensors
-// will have no effect on the readings unless the mode is
-// ReadMode::Manual, but you may wish to use these for testing purposes.
-//
 // emitters defaults to Emitters::All; wait defaults to true
 void QTRSensors::emittersOff(Emitters emitters, bool wait)
 {
@@ -206,7 +202,7 @@ void QTRSensors::emittersOn(Emitters emitters, bool wait)
 }
 
 // assumes pin is valid (not NoEmitterPin)
-// returns time when pin was first set high
+// returns time when pin was first set high (used by emittersSelect())
 uint16_t QTRSensors::emittersOnWithPin(uint8_t pin)
 {
   if (_dimmable && (digitalRead(pin) == HIGH))
@@ -240,11 +236,7 @@ uint16_t QTRSensors::emittersOnWithPin(uint8_t pin)
   return emittersOnStart;
 }
 
-// Turns on the selected emitters and turns off the other emitters with optimized
-// timing (no unnecessary waits compared to calling emittersOff and
-// emittersOn separately, but still waits for both emitterss of emitters to be
-// in the right states before returning).
-void QTRSensors::EmittersSelect(Emitters emitters)
+void QTRSensors::emittersSelect(Emitters emitters)
 {
   Emitters offEmitters;
 
@@ -290,8 +282,8 @@ void QTRSensors::EmittersSelect(Emitters emitters)
   }
 }
 
-
-// Resets the calibration.
+// TODO: free pointers instead so they get reallocated and allow for changing
+// sensor size?
 void QTRSensors::resetCalibration()
 {
   for (uint8_t i = 0; i < _sensorCount; i++)
@@ -303,11 +295,6 @@ void QTRSensors::resetCalibration()
   }
 }
 
-
-// Reads the sensors 10 times and uses the results for
-// calibration.  The sensor values are not returned; instead, the
-// maximum and minimum values found over time are stored internally
-// and used for the readCalibrated() method.
 void QTRSensors::calibrate(ReadMode mode)
 {
   // manual emitter control is not supported
@@ -334,7 +321,6 @@ void QTRSensors::calibrate(ReadMode mode)
                      ReadMode::Off);
   }
 }
-
 
 void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
                                   uint16_t **calibratedMaximum,
@@ -413,14 +399,6 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
   }
 }
 
-// Reads the sensor values into an array. There *MUST* be space
-// for as many values as there were sensors specified in the constructor.
-// Example usage:
-// uint16_t sensorValues[8];
-// sensors.read(sensorValues);
-// The values returned are a measure of the reflectance in abstract units,
-// with higher values corresponding to lower reflectance (e.g. a black
-// surface or a void).
 void QTRSensors::read(uint16_t *sensorValues, ReadMode mode)
 {
   switch (mode)
@@ -445,13 +423,13 @@ void QTRSensors::read(uint16_t *sensorValues, ReadMode mode)
       // Turn on odd emitters and read the odd-numbered sensors.
       // (readPrivate takes a 0-based array index, so start = 0 to start with
       // the first sensor)
-      EmittersSelect(Emitters::Odd);
+      emittersSelect(Emitters::Odd);
       readPrivate(sensorValues, 0, 2);
 
       // Turn on even emitters and read the even-numbered sensors.
       // (readPrivate takes a 0-based array index, so start = 1 to start with
       // the second sensor)
-      EmittersSelect(Emitters::Even);
+      emittersSelect(Emitters::Even);
       readPrivate(sensorValues, 1, 2);
 
       emittersOff();
@@ -476,12 +454,6 @@ void QTRSensors::read(uint16_t *sensorValues, ReadMode mode)
   }
 }
 
-
-// Returns values calibrated to a value between 0 and 1000, where
-// 0 corresponds to the minimum value read by calibrate() and 1000
-// corresponds to the maximum value.  Calibration values are
-// stored separately for each sensor, so that differences in the
-// sensors are accounted for automatically.
 void QTRSensors::readCalibrated(uint16_t *sensorValues, ReadMode mode)
 {
   // manual emitter control is not supported
@@ -568,23 +540,10 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, ReadMode mode)
   }
 }
 
-// Reads the sensor values into an array. There *MUST* be space
-// for as many values as there were sensors specified in the constructor.
-// Example usage:
-// uint16_t sensorValues[8];
-// ...
-// sensors.read(sensorValues);
-// The values returned are in microseconds and range from 0 to
-// timeout (as specified in the constructor).
-// The values returned are a measure of the reflectance in terms of a
-// 10-bit ADC average with higher values corresponding to lower
-// reflectance (e.g. a black surface or a void).
-// A 'step' of n means that the first of every n sensors is read, starting
-// with 'start' (this is 0-indexed, so start = 0 means start with the first
-// sensor). For example, step = 2, start = 1 means read the *even-numbered*
-// sensors.
-
-// emitters defaults to Emitters::All
+// Reads the first of every [step] sensors, starting with [start] (0-indexed, so
+// start = 0 means start with the first sensor).
+// For example, step = 2, start = 1 means read the *even-numbered* sensors.
+// start defaults to 0, step defaults to 1
 void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t start, uint8_t step)
 {
   if (_sensorPins == nullptr) { return; }
