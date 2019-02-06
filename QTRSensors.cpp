@@ -20,10 +20,14 @@ void QTRSensors::setSensorPins(uint8_t *pins, uint8_t sensorCount)
     sensorCount = MaxSensors;
   }
 
+  // (Re)allocate and initialize the array if necessary.
+  uint8_t *oldSensorPins = _sensorPins;
+  _sensorPins = (uint8_t *)realloc(_sensorPins, sizeof(uint8_t) * sensorCount);
   if (_sensorPins == nullptr)
   {
-    _sensorPins = (uint8_t *)malloc(sizeof(uint8_t) * sensorCount);
-    if (_sensorPins == nullptr) { return; } // memory allocation failed
+    // Memory allocation failed; don't continue.
+    free(oldSensorPins); // deallocate any memory used by old array
+    return;
   }
 
   for (uint8_t i = 0; i < sensorCount; i++)
@@ -32,6 +36,11 @@ void QTRSensors::setSensorPins(uint8_t *pins, uint8_t sensorCount)
   }
 
   _sensorCount = sensorCount;
+
+  // Any previous calibration values are no longer valid, and the calibration
+  // arrays might need to be reallocated if the sensor count was changed.
+  _calibrationInitializedOn = false;
+  _calibrationInitializedOff = false;
 }
 
 void QTRSensors::setTimeout(uint16_t timeout)
@@ -282,16 +291,14 @@ void QTRSensors::emittersSelect(Emitters emitters)
   }
 }
 
-// TODO: free pointers instead so they get reallocated and allow for changing
-// sensor size?
 void QTRSensors::resetCalibration()
 {
   for (uint8_t i = 0; i < _sensorCount; i++)
   {
-    if (calibratedMinimumOn)   { calibratedMinimumOn[i] = _maxValue; }
-    if (calibratedMinimumOff)  { calibratedMinimumOff[i] = _maxValue; }
     if (calibratedMaximumOn)   { calibratedMaximumOn[i] = 0; }
     if (calibratedMaximumOff)  { calibratedMaximumOff[i] = 0; }
+    if (calibratedMinimumOn)   { calibratedMinimumOn[i] = _maxValue; }
+    if (calibratedMinimumOff)  { calibratedMinimumOff[i] = _maxValue; }
   }
 }
 
@@ -303,59 +310,66 @@ void QTRSensors::calibrate(ReadMode mode)
   if (mode == ReadMode::On ||
       mode == ReadMode::OnAndOff)
   {
-    calibrateOnOrOff(&calibratedMinimumOn, &calibratedMaximumOn,
-                     ReadMode::On);
+    calibrateOnOrOff(calibratedMinimumOn, calibratedMaximumOn,
+                     _calibrationInitializedOn, ReadMode::On);
   }
   else if (mode == ReadMode::OddEven ||
            mode == ReadMode::OddEvenAndOff)
   {
-    calibrateOnOrOff(&calibratedMinimumOn, &calibratedMaximumOn,
-                     ReadMode::OddEven);
+    calibrateOnOrOff(calibratedMinimumOn, calibratedMaximumOn,
+                     _calibrationInitializedOn, ReadMode::OddEven);
   }
 
   if (mode == ReadMode::OnAndOff ||
       mode == ReadMode::OddEvenAndOff ||
       mode == ReadMode::Off)
   {
-    calibrateOnOrOff(&calibratedMinimumOff, &calibratedMaximumOff,
-                     ReadMode::Off);
+    calibrateOnOrOff(calibratedMinimumOff, calibratedMaximumOff,
+                     _calibrationInitializedOff, ReadMode::Off);
   }
 }
 
-void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
-                                  uint16_t **calibratedMaximum,
+void QTRSensors::calibrateOnOrOff(uint16_t *&calibratedMinimum,
+                                  uint16_t *&calibratedMaximum,
+                                  bool &initialized,
                                   ReadMode mode)
 {
   uint16_t sensorValues[MaxSensors];
   uint16_t maxSensorValues[MaxSensors];
   uint16_t minSensorValues[MaxSensors];
 
-  // Allocate the arrays if necessary.
-  if (*calibratedMaximum == nullptr)
+  // (Re)allocate and initialize the arrays if necessary.
+  if (!initialized)
   {
-    *calibratedMaximum = (uint16_t*)malloc(sizeof(uint16_t) * _sensorCount);
+    uint16_t *oldCalibratedMaximum = calibratedMaximum;
+    calibratedMaximum = (uint16_t *)realloc(calibratedMaximum,
+                                            sizeof(uint16_t) * _sensorCount);
+    if (calibratedMaximum == nullptr)
+    {
+      // Memory allocation failed; don't continue.
+      free(oldCalibratedMaximum); // deallocate any memory used by old array
+      return;
+    }
 
-    // If the malloc failed, don't continue.
-    if (*calibratedMaximum == nullptr) { return; }
+    uint16_t *oldCalibratedMinimum = calibratedMinimum;
+    calibratedMinimum = (uint16_t *)realloc(calibratedMinimum,
+                                            sizeof(uint16_t) * _sensorCount);
+    if (calibratedMinimum == nullptr)
+    {
+      // Memory allocation failed; don't continue.
+      free(oldCalibratedMinimum); // deallocate any memory used by old array
+      return;
+    }
 
     // Initialize the max and min calibrated values to values that
     // will cause the first reading to update them.
     for (uint8_t i = 0; i < _sensorCount; i++)
     {
-      (*calibratedMaximum)[i] = 0;
+      calibratedMaximum[i] = 0;
+      calibratedMinimum[i] = _maxValue;
     }
-  }
-  if (*calibratedMinimum == nullptr)
-  {
-    *calibratedMinimum = (uint16_t*)malloc(sizeof(uint16_t) * _sensorCount);
 
-    // If the malloc failed, don't continue.
-    if (*calibratedMinimum == nullptr) { return; }
-
-    for (uint8_t i = 0; i < _sensorCount; i++)
-    {
-      (*calibratedMinimum)[i] = _maxValue;
-    }
+    initialized = true;
   }
 
   for (uint8_t j = 0; j < 10; j++)
@@ -384,17 +398,17 @@ void QTRSensors::calibrateOnOrOff(uint16_t **calibratedMinimum,
     // Update calibratedMaximum only if the min of 10 readings was still higher
     // than it (we got 10 readings in a row higher than the existing
     // calibratedMaximum).
-    if (minSensorValues[i] > (*calibratedMaximum)[i])
+    if (minSensorValues[i] > calibratedMaximum[i])
     {
-      (*calibratedMaximum)[i] = minSensorValues[i];
+      calibratedMaximum[i] = minSensorValues[i];
     }
 
     // Update calibratedMinimum only if the max of 10 readings was still lower
     // than it (we got 10 readings in a row lower than the existing
     // calibratedMinimum).
-    if (maxSensorValues[i] < (*calibratedMinimum)[i])
+    if (maxSensorValues[i] < calibratedMinimum[i])
     {
-      (*calibratedMinimum)[i] = maxSensorValues[i];
+      calibratedMinimum[i] = maxSensorValues[i];
     }
   }
 }
@@ -465,7 +479,7 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, ReadMode mode)
       mode == ReadMode::OnAndOff ||
       mode == ReadMode::OddEvenAndOff)
   {
-    if ((calibratedMinimumOn == nullptr) || (calibratedMaximumOn == nullptr))
+    if (!_calibrationInitializedOn)
     {
       return;
     }
@@ -475,7 +489,7 @@ void QTRSensors::readCalibrated(uint16_t *sensorValues, ReadMode mode)
       mode == ReadMode::OnAndOff ||
       mode == ReadMode::OddEvenAndOff)
   {
-    if ((calibratedMinimumOff == nullptr) || (calibratedMaximumOff == nullptr))
+    if (!_calibrationInitializedOff)
     {
       return;
     }

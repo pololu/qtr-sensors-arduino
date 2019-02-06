@@ -495,9 +495,11 @@ class QTRSensors
 
     // Handles the actual calibration. calibratedMinimum and
     // calibratedMaximum are pointers to the requested calibration
-    // arrays, which will be allocated if necessary.
-    void calibrateOnOrOff(uint16_t **calibratedMinimum,
-                          uint16_t **calibratedMaximum,
+    // arrays, which will be (re)allocated and initialized if "initialized" is
+    // false.
+    void calibrateOnOrOff(uint16_t *&calibratedMinimum,
+                          uint16_t *&calibratedMaximum,
+                          bool &initialized,
                           ReadMode mode);
 
     void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t start = 0, uint8_t step = 1);
@@ -521,4 +523,6 @@ class QTRSensors
     uint8_t _dimmingLevel = 0;
 
     uint16_t _lastPosition = 0;
+    bool _calibrationInitializedOn = false;
+    bool _calibrationInitializedOff = false;
 };
