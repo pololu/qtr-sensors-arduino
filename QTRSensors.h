@@ -4,71 +4,71 @@
 
 #include <stdint.h>
 
+/// @brief Emitter behavior when taking readings.
+///
+/// Note that emitter control will only work if you specify a valid emitter
+/// pin with setEmitterPin(), and the odd/even modes will only work if you
+/// are using a second-generation QTR or QTRX sensor with two emitter
+/// control pins and you specify both pins with setEmitterPins().
+enum class QTRReadMode : uint8_t {
+  /// Each reading is made without turning on the infrared (IR) emitters.
+  /// The reading represents ambient light levels near the sensor.
+  Off,
+  /// Each reading is made with the emitters on. The reading is a measure
+  /// of reflectance.
+  On,
+  /// For each sensor, a reading is made in both the on and off states. The
+  /// value returned is **on + max &minus; off**, where **on** and **off**
+  /// are the reading with the emitters on and off, respectively, and
+  /// **max** is the maximum possible sensor reading. This mode can reduce
+  /// the amount of interference from uneven ambient lighting.
+  OnAndOff,
+  /// The odd-numbered sensors are read with the odd-numbered emitters on,
+  /// then the even-numbered sensors are read with the even-numbered
+  /// emitters on. This mode can reduce interference between adjacent
+  /// sensors, especially on QTRX sensor boards.
+  OddEven,
+  /// The odd and even sensors are read separately with the respective
+  /// emitters on, then all sensors are read with emitters off and **on +
+  /// max &minus; off** is returned. (In other words, this mode combines
+  /// OddEven and OnAndOff.)
+  OddEvenAndOff,
+  /// Calling read() with this mode prevents it from automatically
+  /// controlling the emitters: they are left in their existing states,
+  /// which allows manual control of the emitters for testing and advanced
+  /// use. Calibrating and obtaining calibrated readings are not supported
+  /// with this mode.
+  Manual
+};
+
+/// Sensor types.
+enum class QTRType : uint8_t {
+  Undefined,
+  RC,
+  Analog
+};
+
+/// Emitters selected to turn on or off.
+enum class QTREmitters : uint8_t {
+  All,
+  Odd,
+  Even,
+  None
+};
+
+/// Represents an undefined emitter control pin.
+const uint8_t QTRNoEmitterPin = 255;
+
+/// Default timeout for RC sensors (in microseconds).
+const uint16_t QTRRCDefaultTimeout = 2500;
+
+/// The maximum number of sensors supported by an instance of this class.
+const uint8_t QTRMaxSensors = 31;
+
 /// This class represents an interface to a QTR sensor board.
 class QTRSensors
 {
   public:
-
-    /// @brief Emitter behavior when taking readings.
-    ///
-    /// Note that emitter control will only work if you specify a valid emitter
-    /// pin with setEmitterPin(), and the odd/even modes will only work if you
-    /// are using a second-generation QTR or QTRX sensor with two emitter
-    /// control pins and you specify both pins with setEmitterPins().
-    enum class ReadMode : uint8_t {
-      /// Each reading is made without turning on the infrared (IR) emitters.
-      /// The reading represents ambient light levels near the sensor.
-      Off,
-      /// Each reading is made with the emitters on. The reading is a measure
-      /// of reflectance.
-      On,
-      /// For each sensor, a reading is made in both the on and off states. The
-      /// value returned is **on + max &minus; off**, where **on** and **off**
-      /// are the reading with the emitters on and off, respectively, and
-      /// **max** is the maximum possible sensor reading. This mode can reduce
-      /// the amount of interference from uneven ambient lighting.
-      OnAndOff,
-      /// The odd-numbered sensors are read with the odd-numbered emitters on,
-      /// then the even-numbered sensors are read with the even-numbered
-      /// emitters on. This mode can reduce interference between adjacent
-      /// sensors, especially on QTRX sensor boards.
-      OddEven,
-      /// The odd and even sensors are read separately with the respective
-      /// emitters on, then all sensors are read with emitters off and **on +
-      /// max &minus; off** is returned. (In other words, this mode combines
-      /// OddEven and OnAndOff.)
-      OddEvenAndOff,
-      /// Calling read() with this mode prevents it from automatically
-      /// controlling the emitters: they are left in their existing states,
-      /// which allows manual control of the emitters for testing and advanced
-      /// use. Calibrating and obtaining calibrated readings are not supported
-      /// with this mode.
-      Manual
-    };
-
-    /// Sensor types.
-    enum class Type : uint8_t {
-      Undefined,
-      RC,
-      Analog
-    };
-
-    /// Emitters selected to turn on or off.
-    enum class Emitters : uint8_t {
-      All,
-      Odd,
-      Even,
-      None
-    };
-
-    /// Represents an undefined emitter control pin.
-    const uint8_t NoEmitterPin = 255;
-
-    /// Default timeout for RC sensors (in microseconds).
-    const uint16_t RCDefaultTimeout = 2500;
-
-    /// The maximum number of sensors supported by an instance of this class.
-    const uint8_t MaxSensors = 31;
 
     QTRSensors() = default;
 
@@ -86,10 +86,10 @@ class QTRSensors
 
     /// @brief Returns the type of the sensors.
     ///
-    /// @return The sensor type as a member of the QTRSensors::Type enum.
+    /// @return The sensor type as a member of the ::QTRType enum.
     ///
     /// See also setTypeRC() and setTypeAnalog().
-    Type getType() { return _type; }
+    QTRType getType() { return _type; }
 
     /// @brief Sets the sensor pins.
     ///
@@ -201,7 +201,7 @@ class QTRSensors
     /// @brief Returns the emitter control pin.
     ///
     /// @return The Arduino digital pin number of the emitter control pin
-    /// (QTRSensors::NoEmitterPin if undefined).
+    /// (QTRNoEmitterPin if undefined).
     ///
     /// This function is intended for use when there is a single emitter pin
     /// specified; you can use getOddEmitterPin() and getEvenEmitterPin()
@@ -213,7 +213,7 @@ class QTRSensors
     /// @brief Returns the odd emitter control pin.
     ///
     /// @return The Arduino digital pin number of the odd emitter control pin
-    /// (QTRSensors::NoEmitterPin if undefined).
+    /// (QTRNoEmitterPin if undefined).
     ///
     /// This function is intended for use when there are separate odd and even
     /// emitter pins specified; you can use getEmitterPin() instead when only
@@ -225,7 +225,7 @@ class QTRSensors
     /// @brief Returns the even emitter control pin.
     ///
     /// @return The Arduino digital pin number of the even emitter control pin
-    /// (QTRSensors::NoEmitterPin if undefined).
+    /// (QTRNoEmitterPin if undefined).
     ///
     /// This function is intended for use when there are separate odd and even
     /// emitter pins specified; you can use getEmitterPin() instead when only
@@ -287,7 +287,7 @@ class QTRSensors
     /// @brief Turns the IR LEDs off.
     ///
     /// @param emitters Which emitters to turn off, as a member of the
-    /// QTRSensors::Emitters enum. The default is QTRSensors::Emitters::All.
+    /// ::QTREmitters enum. The default is QTREmitters::All.
     ///
     /// @param wait If true (the default), this function delays to give the
     /// sensors time to turn off before returning. Otherwise, it returns
@@ -296,14 +296,14 @@ class QTRSensors
     /// This function is mainly for use by the read() method. Since read()
     /// normally turns the emitters on and off automatically for each reading,
     /// calling this function yourself will not affect the readings unless the
-    /// read mode is QTRSensors::ReadMode::Manual, which tells read() to leave
-    /// the emitters alone.
-    void emittersOff(Emitters emitters = Emitters::All, bool wait = true);
+    /// read mode is QTRReadMode::Manual, which tells read() to leave the
+    /// emitters alone.
+    void emittersOff(QTREmitters emitters = QTREmitters::All, bool wait = true);
 
     /// @brief Turns the IR LEDs on.
     ///
     /// @param emitters Which emitters to turn on, as a member of the
-    /// QTRSensors::Emitters enum. The default is QTRSensors::Emitters::All.
+    /// ::QTREmitters enum. The default is QTREmitters::All.
     ///
     /// @param wait If true (the default), this function delays to give the
     /// sensors time to turn on before returning. Otherwise, it returns
@@ -315,31 +315,30 @@ class QTRSensors
     /// This function is mainly for use by the read() method. Since read()
     /// normally turns the emitters on and off automatically for each reading,
     /// calling this function yourself will not affect the readings unless the
-    /// read mode is QTRSensors::ReadMode::Manual, which tells read() to leave
-    /// the emitters alone.
-    void emittersOn(Emitters emitters = Emitters::All, bool wait = true);
+    /// read mode is QTRReadMode::Manual, which tells read() to leave the
+    /// emitters alone.
+    void emittersOn(QTREmitters emitters = QTREmitters::All, bool wait = true);
 
     /// @brief  Turns on the selected emitters and turns off the other emitters
     /// with optimized timing.
     ///
     /// @param emitters Which emitters to turn on, as a member of the
-    /// QTRSensors::Emitters enum. The other emitters will be turned off.
+    /// ::QTREmitters enum. The other emitters will be turned off.
     ///
     /// This function turns on the selected emitters while it waits for the
     /// other emitters to turn off. For example,
-    /// `emittersSelect(QTRSensors::Emitters::Odd)` turns on the odd-numbered
-    /// emitters while turning off the even-numbered emitters.  Using this
-    /// method avoids unnecessary delays compared to calling emittersOff() and
-    /// emittersOn() separately, but it still waits for all emitters to be in
-    /// the right states before returning.
-    void emittersSelect(Emitters emitters);
+    /// `emittersSelect(QTREmitters::Odd)` turns on the odd-numbered emitters
+    /// while turning off the even-numbered emitters. Using this method avoids
+    /// unnecessary delays compared to calling emittersOff() and emittersOn()
+    /// separately, but it still waits for all emitters to be in the right
+    /// states before returning.
+    void emittersSelect(QTREmitters emitters);
 
     /// @brief Reads the sensors for calibration.
     ///
     /// @param mode The emitter behavior during calibration, as a member of the
-    /// QTRSensors::ReadMode enum. The default is QTRSensors::ReadMode::On.
-    /// Manual emitter control with QTRSensors::ReadMode::Manual is not
-    /// supported.
+    /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
+    /// control with QTRReadMode::Manual is not supported.
     ///
     /// This method reads the sensors 10 times and uses the results for
     /// calibration. The sensor values are not returned; instead, the maximum
@@ -354,7 +353,7 @@ class QTRSensors
     /// calibrate() has been called. If you only calibrate with the emitters
     /// on, the calibration arrays that hold the off values will not be
     /// allocated (and vice versa).
-    void calibrate(ReadMode mode = ReadMode::On);
+    void calibrate(QTRReadMode mode = QTRReadMode::On);
 
     /// @brief Resets all calibration that has been done.
     void resetCalibration();
@@ -366,7 +365,7 @@ class QTRSensors
     /// array for as many values as there were sensors specified in setSensorPins().
     ///
     /// @param mode The emitter behavior during the read, as a member of the
-    /// QTRSensors::ReadMode enum. The default is QTRSensors::ReadMode::On.
+    /// ::QTRReadMode enum. The default is QTRReadMode::On.
     ///
     /// Example usage:
     /// ~~~{.cpp}
@@ -383,7 +382,7 @@ class QTRSensors
     ///
     /// RC sensors will return a raw value in microseconds between 0 and the timeout
     /// setting configured with setTimeout() (the default timeout is 2500 &micro;s).
-    void read(uint16_t *sensorValues, ReadMode mode = ReadMode::On);
+    void read(uint16_t *sensorValues, QTRReadMode mode = QTRReadMode::On);
 
     /// @brief Reads the sensors and provides calibrated values between 0 and
     /// 1000.
@@ -392,15 +391,14 @@ class QTRSensors
     /// calibrated sensor readings.
     ///
     /// @param mode The emitter behavior during the read, as a member of the
-    /// QTRSensors::ReadMode enum. The default is QTRSensors::ReadMode::On.
-    /// Manual emitter control with QTRSensors::ReadMode::Manual is not
-    /// supported.
+    /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
+    /// control with QTRReadMode::Manual is not supported.
     ///
     /// 0 corresponds to the minimum value read by calibrate() and 1000
     /// corresponds to the maximum value. Calibration values are
     /// stored separately for each sensor, so that differences in the
     /// sensors are accounted for automatically.
-    void readCalibrated(uint16_t *sensorValues, ReadMode mode = ReadMode::On);
+    void readCalibrated(uint16_t *sensorValues, QTRReadMode mode = QTRReadMode::On);
 
     /// @brief Reads the sensors, provides calibrated values, and returns an
     /// estimated black line position.
@@ -409,9 +407,8 @@ class QTRSensors
     /// calibrated sensor readings.
     ///
     /// @param mode The emitter behavior during the read, as a member of the
-    /// QTRSensors::ReadMode enum. The default is QTRSensors::ReadMode::On.
-    /// Manual emitter control with QTRSensors::ReadMode::Manual is not
-    /// supported.
+    /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
+    /// control with QTRReadMode::Manual is not supported.
     ///
     /// @return An estimate of the position of a black line under the sensors.
     ///
@@ -441,8 +438,7 @@ class QTRSensors
     /// This function is intended to detect a black (or dark-colored) line on a
     /// white (or light-colored) background. For a white line, see
     /// readLineWhite().
-    uint16_t readLineBlack(uint16_t *sensorValues, ReadMode mode =
-        ReadMode::On)
+    uint16_t readLineBlack(uint16_t *sensorValues, QTRReadMode mode = QTRReadMode::On)
     {
       readLinePrivate(sensorValues, mode, false);
     }
@@ -454,16 +450,15 @@ class QTRSensors
     /// calibrated sensor readings.
     ///
     /// @param mode The emitter behavior during the read, as a member of the
-    /// QTRSensors::ReadMode enum. The default is QTRSensors::ReadMode::On.
-    /// Manual emitter control with QTRSensors::ReadMode::Manual is not
-    /// supported.
+    /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
+    /// control with QTRReadMode::Manual is not supported.
     ///
     /// @return An estimate of the position of a white line under the sensors.
     ///
     /// This function is intended to detect a white (or light-colored) line on
     /// a black (or dark-colored) background. For a black line, see
     /// readLineBlack().
-    uint16_t readLineWhite(uint16_t *sensorValues, ReadMode mode = ReadMode::On)
+    uint16_t readLineWhite(uint16_t *sensorValues, QTRReadMode mode = QTRReadMode::On)
     {
       readLinePrivate(sensorValues, mode, true);
     }
@@ -500,23 +495,23 @@ class QTRSensors
     void calibrateOnOrOff(uint16_t *&calibratedMinimum,
                           uint16_t *&calibratedMaximum,
                           bool &initialized,
-                          ReadMode mode);
+                          QTRReadMode mode);
 
-    void QTRSensors::readPrivate(uint16_t *sensorValues, uint8_t start = 0, uint8_t step = 1);
+    void readPrivate(uint16_t *sensorValues, uint8_t start = 0, uint8_t step = 1);
 
-    int readLinePrivate(uint16_t *sensorValues, ReadMode mode, bool invertReadings);
+    int readLinePrivate(uint16_t *sensorValues, QTRReadMode mode, bool invertReadings);
 
-    Type _type = Type::Undefined;
+    QTRType _type = QTRType::Undefined;
 
     uint8_t *_sensorPins = nullptr;
     uint8_t _sensorCount = 0;
 
-    uint16_t _timeout = RCDefaultTimeout; // only used for RC sensors
-    uint16_t _maxValue = RCDefaultTimeout; // the maximum value returned by readPrivate()
+    uint16_t _timeout = QTRRCDefaultTimeout; // only used for RC sensors
+    uint16_t _maxValue = QTRRCDefaultTimeout; // the maximum value returned by readPrivate()
     uint8_t _samplesPerSensor = 4; // only used for analog sensors
 
-    uint8_t _oddEmitterPin = NoEmitterPin; // also used for single emitter pin
-    uint8_t _evenEmitterPin = NoEmitterPin;
+    uint8_t _oddEmitterPin = QTRNoEmitterPin; // also used for single emitter pin
+    uint8_t _evenEmitterPin = QTRNoEmitterPin;
     uint8_t _emitterPinCount = 0;
 
     bool _dimmable = true;
