@@ -695,7 +695,7 @@ QTRSensors::~QTRSensors()
 {
   releaseEmitterPins();
 
-  if (_sensorPins)          { free(_sensorPins); }
+  if (_sensorPins)            { free(_sensorPins); }
   if (calibrationOn.maximum)  { free(calibrationOn.maximum); }
   if (calibrationOff.maximum) { free(calibrationOff.maximum); }
   if (calibrationOn.minimum)  { free(calibrationOn.minimum); }
