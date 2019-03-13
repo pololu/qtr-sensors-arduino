@@ -8,20 +8,20 @@ This library allows you to use the QTRSensors::calibrate() method to easily cali
 
 ```cpp
 #include <QTRSensors.h>
- 
+
 QTRSensors qtr;
- 
+
 void setup()
 {
   // Optional: wait for some input from the user, such as a button press.
- 
+
   // Initialize the sensors.
   // In this example we have three sensors on pins A0 - A2.
   qtr.setTypeRC(); // or setTypeAnalog()
-  qtr.setSensorPins((const uint8_t[]) {A0, A1, A2}, 3);
-  
+  qtr.setSensorPins((const uint8_t[]){A0, A1, A2}, 3);
+
   // Optional: change parameters like RC timeout, set an emitter control pin...
-  
+
   // Then start the calibration phase and move the sensors over both reflectance
   // extremes they will encounter in your application. This calibration should
   // take about 5 seconds (250 iterations * 20 ms per iteration).
@@ -33,7 +33,7 @@ void setup()
     qtr.calibrate();
     delay(20);
   }
- 
+
   // Optional: signal that the calibration phase is now over and wait for
   // further input from the user, such as a button press.
 }
@@ -60,7 +60,7 @@ void loop()
   // line position, which will range from 0 to 2000, with 1000 corresponding to
   // a position under the middle sensor.
   int16_t position = qtr.readLineBlack(sensors);
- 
+
   // If all three sensors see very low reflectance, take some appropriate action
   // for this  situation.
   if ((sensors[0] > 750) && (sensors[1] > 750) && (sensors[2] > 750))
@@ -70,18 +70,18 @@ void loop()
     // and turn around.
     return;
   }
- 
+
   // Compute our "error" from the line position. We will make it so that the
   // error is zero when the middle sensor is over the line, because this is our
   // goal. Error will range from -1000 to +1000. If we have sensor 0 on the left
   // and sensor 2 on the right,  a reading of -1000 means that we see the line
   // on the left and a reading of +1000 means we see the line on the right.
   int16_t error = position - 1000;
- 
+
   int16_t leftMotorSpeed = 100;
   int16_t rightMotorSpeed = 100;
   if (error < -500)
-  {  
+  {
     // the line is on the left
     leftMotorSpeed = 0;  // turn left
   }
@@ -90,7 +90,7 @@ void loop()
     // the line is on the right
     rightMotorSpeed = 0;  // turn right
   }
- 
+
   // set motor speeds using the two motor speed variables above
 }
 ```
@@ -109,20 +109,20 @@ The following code gives a very simple example of PD (proportional&ndash;derivat
 void loop()
 {
   static uint16_t lastError = 0;
-  
+
   uint16_t sensors[3];
   // Get calibrated sensor values returned in the sensors array, along with the
   // line position, which will range from 0 to 2000, with 1000 corresponding to
   // a position under the middle sensor
   int16_t position = qtr.readLineBlack(sensors);
- 
+
   // Compute our "error" from the line position. We will make it so that the
-  // error is zero when the middle sensor is over the line, because this is our 
+  // error is zero when the middle sensor is over the line, because this is our
   // goal. Error will range from -1000 to +1000. If we have sensor 0 on the left
   // and sensor 2 on the right, a reading of -1000 means that we see the line on
   // the left and a reading of +1000 means we see the line on the right.
   int16_t error = position - 1000;
- 
+
   // Set the motor speed based on proportional and derivative PID terms:
   // KP is the floating-point proportional constant (maybe start with a value around 0.1)
   // KD is the floating-point derivative constant (maybe start with a value around 5)
@@ -130,7 +130,7 @@ void loop()
   // else the control loop will be unstable.
   int16_t motorSpeed = KP * error + KD * (error - lastError);
   lastError = error;
- 
+
   // M1 and M2 are base motor speeds (the speeds the motors should run if you
   // are perfectly on the line with no error). If your motors are well matched,
   // M1 and M2 will be equal. When you start testing your PID loop, it might
@@ -138,13 +138,13 @@ void loop()
   // speed as you fine-tune your PID constants KP and KD.
   int16_t m1Speed = M1 + motorSpeed;
   int16_t m2Speed = M2 - motorSpeed;
- 
+
   // It might help to keep the speeds positive (this is optional). You might
   // also want to add a similar check to keep the speeds from exceeding a
   // maximum limit.
   if (m1Speed < 0) { m1Speed = 0; }
   if (m2Speed < 0) { m2Speed = 0; }
- 
+
   // set motor speeds using the two motor speed variables above
 }
 ```

@@ -96,11 +96,24 @@ class QTRSensors
 
     /// \brief Sets the sensor pins.
     ///
-    /// \param[in] pins A pointer to an array containing the Arduino digital
-    /// pin numbers for each sensor.
+    /// \param[in] pins A pointer to an array containing the Arduino pins that
+    /// the sensors are connected to.
     ///
     /// \param sensorCount The number of sensors, which should match the length
     /// of the pins array.
+    ///
+    /// Example usage:
+    /// ~~~{.cpp}
+    /// // Set pins for four RC sensors connected to pins 6, 7, A0, and A1.
+    /// // (Most analog pins can also be used as digital pins.)
+    /// qtr.setTypeRC();
+    /// qtr.setSensorPins((const uint8_t[]){6, 7, A0, A1});
+    /// ~~~
+    /// ~~~{.cpp}
+    /// // Set pins for four analog sensors connected to pins A2, A3, A4, and A5.
+    /// qtr.setTypeAnalog();
+    /// qtr.setSensorPins((const uint8_t[]){A2, A3, A4, A5});
+    /// ~~~
     ///
     /// If \link CalibrationData calibration data \endlink has already been
     /// stored, calling this method will force the storage for the calibration
@@ -382,7 +395,7 @@ class QTRSensors
     ///
     /// Example usage:
     /// ~~~{.cpp}
-    /// unsigned int sensorValues[8];
+    /// uint16_t sensorValues[8];
     /// qtr.read(sensorValues);
     /// ~~~
     ///
