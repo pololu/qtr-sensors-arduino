@@ -461,7 +461,7 @@ class QTRSensors
     /// See \ref md_usage for more information and example code.
     uint16_t readLineBlack(uint16_t * sensorValues, QTRReadMode mode = QTRReadMode::On)
     {
-      readLinePrivate(sensorValues, mode, false);
+      return readLinePrivate(sensorValues, mode, false);
     }
 
     /// \brief Reads the sensors, provides calibrated values, and returns an
@@ -483,7 +483,7 @@ class QTRSensors
     /// See \ref md_usage for more information and example code.
     uint16_t readLineWhite(uint16_t * sensorValues, QTRReadMode mode = QTRReadMode::On)
     {
-      readLinePrivate(sensorValues, mode, true);
+      return readLinePrivate(sensorValues, mode, true);
     }
 
 

@@ -653,9 +653,6 @@ int QTRSensors::readLinePrivate(uint16_t * sensorValues, QTRReadMode mode,
 
   readCalibrated(sensorValues, mode);
 
-  avg = 0;
-  sum = 0;
-
   for (uint8_t i = 0; i < _sensorCount; i++)
   {
     uint16_t value = sensorValues[i];
