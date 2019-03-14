@@ -459,6 +459,12 @@ void QTRSensors::read(uint16_t * sensorValues, QTRReadMode mode)
     for (uint8_t i = 0; i < _sensorCount; i++)
     {
       sensorValues[i] += _maxValue - offValues[i];
+      if (sensorValues[i] > _maxValue)
+      {
+        // This usually doesn't happen, because the sensor reading should
+        // go up when the emitters are turned off.
+        sensorValues[i] = _maxValue;
+      }
     }
   }
 }
