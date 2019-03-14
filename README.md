@@ -1,7 +1,7 @@
 # Arduino library for the Pololu QTR Reflectance Sensors
 
 Version: 4.0.0<br>
-Release date: 2019-03-04<br>
+Release date: 2019-03-14<br>
 [![Build Status](https://travis-ci.org/pololu/qtr-sensors-arduino.svg?branch=master)](https://travis-ci.org/pololu/qtr-sensors-arduino)<br>
 [www.pololu.com](https://www.pololu.com/)
 
