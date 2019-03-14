@@ -140,6 +140,10 @@ class QTRSensors
     /// sensor-reading cycle while maintaining useful measurements of
     /// reflectance. The default timeout is 2500 &micro;s.
     ///
+    /// The maximum allowed timeout is 32767.
+    /// (This prevents any possibility of an overflow when using
+    /// QTRReadMode::OnAndOff or QTRReadMode::OddEvenAndOff).
+    ///
     /// The timeout setting only applies to RC sensors.
     void setTimeout(uint16_t timeout);
 
