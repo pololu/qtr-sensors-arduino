@@ -1,5 +1,5 @@
 #######################################
-# Syntax Coloring Map QTRSensors
+# Syntax Coloring Map for QTRSensors
 #######################################
 
 #######################################
@@ -7,42 +7,52 @@
 #######################################
 
 QTRSensors	KEYWORD1
-QTRDimmable	KEYWORD1
-QTRSensorsRC	KEYWORD1
-QTRSensorsAnalog	KEYWORD1
-QTRDimmableRC	KEYWORD1
-QTRDimmableAnalog	KEYWORD1
+QTRReadMode	KEYWORD1
+QTRType	KEYWORD1
+QTREmitters	KEYWORD1
+CalibrationData	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-read	KEYWORD2
-emittersOff	KEYWORD2
-emittersOn	KEYWORD2
-emitterBankSelect	KEYWORD2
+setTypeRC	KEYWORD2
+setTypeAnalog	KEYWORD2
+getType	KEYWORD2
+setSensorPins	KEYWORD2
+setTimeout	KEYWORD2
+getTimeout	KEYWORD2
+setSamplesPerSensor	KEYWORD2
+getSamplesPerSensor	KEYWORD2
+setEmitterPin	KEYWORD2
+setEmitterPins	KEYWORD2
+releaseEmitterPins	KEYWORD2
+getEmitterPinCount	KEYWORD2
+getEmitterPin	KEYWORD2
+getOddEmitterPin	KEYWORD2
+getEvenEmitterPin	KEYWORD2
+setDimmable	KEYWORD2
+setNonDimmable	KEYWORD2
+isDimmable	KEYWORD2
 setDimmingLevel	KEYWORD2
 getDimmingLevel	KEYWORD2
+emittersOff	KEYWORD2
+emittersOn	KEYWORD2
+emittersSelect	KEYWORD2
 calibrate	KEYWORD2
 resetCalibration	KEYWORD2
+read	KEYWORD2
 readCalibrated	KEYWORD2
-readLine	KEYWORD2
-calibratedMinimumOn	KEYWORD2
-calibratedMaximumOn	KEYWORD2
-calibratedMinimumOff	KEYWORD2
-calibratedMaximumOff	KEYWORD2
-init	KEYWORD2
+readLineBlack	KEYWORD2
+readLineWhite	KEYWORD2
+
+calibrationOn	KEYWORD2
+calibrationOff	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
 
-QTR_EMITTERS_OFF	LITERAL1
-QTR_EMITTERS_ON	LITERAL1
-QTR_EMITTERS_ON_AND_OFF	LITERAL1
-QTR_EMITTERS_ODD_EVEN	LITERAL1
-QTR_EMITTERS_ODD_EVEN_AND_OFF	LITERAL1
-QTR_EMITTERS_MANUAL	LITERAL1
-QTR_NO_EMITTER_PIN	LITERAL1
-QTR_BANK_ODD	LITERAL1
-QTR_BANK_EVEN	LITERAL1
+QTRNoEmitterPin	LITERAL1
+QTRRCDefaultTimeout	LITERAL1
+QTRMaxSensors	LITERAL1
