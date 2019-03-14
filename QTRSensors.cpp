@@ -13,7 +13,7 @@ void QTRSensors::setTypeAnalog()
   _maxValue = 1023; // Arduino analogRead() returns a 10-bit value by default
 }
 
-void QTRSensors::setSensorPins(uint8_t * pins, uint8_t sensorCount)
+void QTRSensors::setSensorPins(const uint8_t * pins, uint8_t sensorCount)
 {
   if (sensorCount > QTRMaxSensors)
   {

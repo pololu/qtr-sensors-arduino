@@ -120,7 +120,7 @@ class QTRSensors
     /// values to be reallocated and reinitialized the next time calibrate() is
     /// called (it sets `calibrationOn.initialized` and
     /// `calibrationOff.initialized` to false).
-    void setSensorPins(uint8_t * pins, uint8_t sensorCount);
+    void setSensorPins(const uint8_t * pins, uint8_t sensorCount);
 
     /// \brief Sets the timeout for RC sensors.
     ///
@@ -147,13 +147,11 @@ class QTRSensors
 
     /// \brief Sets the number of analog readings to average per analog sensor.
     ///
-    /// \param samples The number of 10-bit analog samples to average per
-    /// channel (per sensor) for each reading.
+    /// \param samples The number of 10-bit analog samples (analog-to-digital
+    /// conversions) to average per sensor each time it is read.
     ///
-    /// The total number of analog-to-digital conversions performed will be
-    /// equal to **sensor count &times; samples per sensor**. Increasing \p
-    /// samples increases noise suppression at the cost of sample rate. The
-    /// maximum number of samples per sensor is 64; the default is 4.
+    /// Increasing \p samples increases noise suppression at the cost of sample
+    /// rate. The maximum number of samples per sensor is 64; the default is 4.
     ///
     /// The samples per sensor setting only applies to analog sensors.
     void setSamplesPerSensor(uint8_t samples);
