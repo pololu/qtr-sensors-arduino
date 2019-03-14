@@ -416,7 +416,6 @@ void QTRSensors::read(uint16_t * sensorValues, QTRReadMode mode)
     case QTRReadMode::Off:
       emittersOff();
       // fall through
-
     case QTRReadMode::Manual:
       readPrivate(sensorValues);
       return;
@@ -636,7 +635,7 @@ void QTRSensors::readPrivate(uint16_t * sensorValues, uint8_t start, uint8_t ste
       }
       return;
 
-    default: // QTR_TYPE_UNDEFINED or invalid - do nothing
+    default: // QTRType::Undefined or invalid - do nothing
       return;
   }
 }

@@ -14,26 +14,31 @@ enum class QTRReadMode : uint8_t {
   /// Each reading is made without turning on the infrared (IR) emitters. The
   /// reading represents ambient light levels near the sensor.
   Off,
+
   /// Each reading is made with the emitters on. The reading is a measure of
   /// reflectance.
   On,
+
   /// For each sensor, a reading is made in both the on and off states. The
   /// value returned is **on + max &minus; off**, where **on** and **off** are
   /// the reading with the emitters on and off, respectively, and **max** is
   /// the maximum possible sensor reading. This mode can reduce the amount of
   /// interference from uneven ambient lighting.
   OnAndOff,
+
   /// The odd-numbered sensors are read with the odd-numbered emitters on, then
   /// the even-numbered sensors are read with the even-numbered emitters on.
   /// This mode can reduce interference between adjacent sensors, especially on
   /// QTRX sensor boards. It is only usable with second-generation QTR and QTRX
   /// sensor arrays that have two emitter control pins.
   OddEven,
+
   /// The odd and even sensors are read separately with the respective emitters
   /// on, then all sensors are read with emitters off and **on + max &minus;
   /// off** is returned. (In other words, this mode combines OddEven and
   /// OnAndOff.)
   OddEvenAndOff,
+
   /// Calling read() with this mode prevents it from automatically controlling
   /// the emitters: they are left in their existing states, which allows manual
   /// control of the emitters for testing and advanced use. Calibrating and
@@ -275,14 +280,15 @@ class QTRSensors
 
     /// \brief Returns whether the sensors are dimmable.
     ///
-    /// \return True if the sensors are dimmable, false otherwise.
+    /// \return True if this object is configured to treat the sensors as
+    /// dimmable, false otherwise.
     ///
     /// See also setDimmable() and setNonDimmable().
     bool isDimmable() { return _dimmable; }
 
     /// \brief Sets the dimming level.
     ///
-    /// \param dimmingLevel The dimming level (0-31). A dimming level of 0
+    /// \param dimmingLevel The dimming level (0 to 31). A dimming level of 0
     /// corresponds to full current and brightness, with higher dimming levels
     /// meaning lower currents.
     ///
@@ -340,7 +346,7 @@ class QTRSensors
     /// emitters alone.
     void emittersOn(QTREmitters emitters = QTREmitters::All, bool wait = true);
 
-    /// \brief  Turns on the selected emitters and turns off the other emitters
+    /// \brief Turns on the selected emitters and turns off the other emitters
     /// with optimized timing.
     ///
     /// \param emitters Which emitters to turn on, as a member of the
@@ -417,7 +423,8 @@ class QTRSensors
     /// 1000.
     ///
     /// \param[out] sensorValues A pointer to an array in which to store the
-    /// calibrated sensor readings.
+    /// calibrated sensor readings.  There **MUST** be space in the array for
+    /// as many values as there were sensors specified in setSensorPins().
     ///
     /// \param mode The emitter behavior during the read, as a member of the
     /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
@@ -436,7 +443,8 @@ class QTRSensors
     /// estimated black line position.
     ///
     /// \param[out] sensorValues A pointer to an array in which to store the
-    /// calibrated sensor readings.
+    /// calibrated sensor readings.  There **MUST** be space in the array for
+    /// as many values as there were sensors specified in setSensorPins().
     ///
     /// \param mode The emitter behavior during the read, as a member of the
     /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
@@ -481,7 +489,8 @@ class QTRSensors
     /// estimated white line position.
     ///
     /// \param[out] sensorValues A pointer to an array in which to store the
-    /// calibrated sensor readings.
+    /// calibrated sensor readings.  There **MUST** be space in the array for
+    /// as many values as there were sensors specified in setSensorPins().
     ///
     /// \param mode The emitter behavior during the read, as a member of the
     /// ::QTRReadMode enum. The default is QTRReadMode::On. Manual emitter
