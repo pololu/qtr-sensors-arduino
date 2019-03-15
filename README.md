@@ -1,7 +1,7 @@
 # Arduino library for the Pololu QTR Reflectance Sensors
 
 Version: 4.0.0<br>
-Release date: 2019-03-14<br>
+Release date: 2019-03-15<br>
 [![Build Status](https://travis-ci.org/pololu/qtr-sensors-arduino.svg?branch=master)](https://travis-ci.org/pololu/qtr-sensors-arduino)<br>
 [www.pololu.com](https://www.pololu.com/)
 
@@ -17,7 +17,9 @@ This library is designed to work with the Arduino IDE versions 1.8.x or later; w
 
 ### Hardware
 
-QTR reflectance sensor arrays can be purchased from Pololu's website. Before continuing, careful reading of the [QTR Reflectance Sensor Application Note][app-note] is recommended.
+The QTRSensors library supports Pololu's second-generation dimmable [QTR and QTRX reflectance sensor boards][qtr], as well as [older QTR sensors][older-qtr]. Before continuing, careful reading of the [QTR Reflectance Sensor Application Note][app-note] is recommended.
+
+This library also works with the reflectance sensors built into or designed for Pololu robots, such as the [Zumo 32U4 Front Sensor Array](https://www.pololu.com/product/3122). However, the dedicated libraries for those robots (e.g. the [Zumo32U4 library](https://github.com/pololu/zumo-32u4-arduino-library)) generally provide an interface that is specific to those sensors and is easier to use.
 
 ### Software
 
@@ -44,7 +46,7 @@ Several example sketches are available that show how to use the library. You can
 For complete documentation of this library, see [the qtr-sensors-arduino documentation][doc].  If you are already on that page, see the QTRSensors class reference.
 
 ## Version history
-* 4.0.0 (2019-03-14): Major library rewrite: instead of a hierarchy of classes for different sensor types, the library now provides a single `QTRSensors` class, and instances of this class can be configured for a specific sensor type. Configuration of sensor pins and other settings is now done using more human-readable class methods instead of constructor parameters. Support for calibration using the odd/even read modes has been added.
+* 4.0.0 (2019-03-15): Major library rewrite: instead of a hierarchy of classes for different sensor types, the library now provides a single `QTRSensors` class, and instances of this class can be configured for a specific sensor type. Configuration of sensor pins and other settings is now done using more human-readable class methods instead of constructor parameters. Support for calibration using the odd/even read modes has been added.
 * 3.1.0 (2018-08-08): Added support for dimmable QTR and QTRX sensors with separate control of odd/even emitter banks.
 * 3.0.0 (2016-08-16): Updated library to work with the Arduino Library Manager.
 * 2.1.2 (2015-12-03): Corrected `readLine()` behavior to work with multiple instances (thanks to Tandy Carmichael).
@@ -57,4 +59,5 @@ For complete documentation of this library, see [the qtr-sensors-arduino documen
 [a-star]: https://www.pololu.com/a-star
 [app-note]: https://www.pololu.com/docs/0J13
 [doc]: https://pololu.github.io/qtr-sensors-arduino/
-[qtr]: https://www.pololu.com/qtr
+[older-qtr]: https://www.pololu.com/category/246/older-qtr-sensors
+[qtr]: https://www.pololu.com/category/123/pololu-qtr-reflectance-sensors

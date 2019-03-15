@@ -70,7 +70,11 @@ const uint16_t QTRRCDefaultTimeout = 2500;
 /// The maximum number of sensors supported by an instance of this class.
 const uint8_t QTRMaxSensors = 31;
 
-/// \brief Represents an interface to a QTR sensor board.
+/// \brief Represents a QTR sensor array.
+///
+/// An instance of this class represents a QTR sensor array, consisting of one 
+/// or more sensors of the same type. This could be either a single QTR sensor
+/// board or multiple boards controlled as a group.
 ///
 /// See \ref md_usage for an overview of how this library can be used and some
 /// example code.
@@ -286,7 +290,7 @@ class QTRSensors
     /// dimmable, false otherwise.
     ///
     /// See also setDimmable() and setNonDimmable().
-    bool isDimmable() { return _dimmable; }
+    bool getDimmable() { return _dimmable; }
 
     /// \brief Sets the dimming level.
     ///

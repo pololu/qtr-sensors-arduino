@@ -33,7 +33,7 @@ getOddEmitterPin	KEYWORD2
 getEvenEmitterPin	KEYWORD2
 setDimmable	KEYWORD2
 setNonDimmable	KEYWORD2
-isDimmable	KEYWORD2
+getDimmable	KEYWORD2
 setDimmingLevel	KEYWORD2
 getDimmingLevel	KEYWORD2
 emittersOff	KEYWORD2
