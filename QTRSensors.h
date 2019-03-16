@@ -72,7 +72,7 @@ const uint8_t QTRMaxSensors = 31;
 
 /// \brief Represents a QTR sensor array.
 ///
-/// An instance of this class represents a QTR sensor array, consisting of one 
+/// An instance of this class represents a QTR sensor array, consisting of one
 /// or more sensors of the same type. This could be either a single QTR sensor
 /// board or multiple boards controlled as a group.
 ///
@@ -116,12 +116,12 @@ class QTRSensors
     /// // Set pins for four RC sensors connected to pins 6, 7, A0, and A1.
     /// // (Most analog pins can also be used as digital pins.)
     /// qtr.setTypeRC();
-    /// qtr.setSensorPins((const uint8_t[]){6, 7, A0, A1});
+    /// qtr.setSensorPins((const uint8_t[]){6, 7, A0, A1}, 4);
     /// ~~~
     /// ~~~{.cpp}
     /// // Set pins for four analog sensors connected to pins A2, A3, A4, and A5.
     /// qtr.setTypeAnalog();
-    /// qtr.setSensorPins((const uint8_t[]){A2, A3, A4, A5});
+    /// qtr.setSensorPins((const uint8_t[]){A2, A3, A4, A5}, 4);
     /// ~~~
     ///
     /// If \link CalibrationData calibration data \endlink has already been
@@ -227,7 +227,9 @@ class QTRSensors
     /// \brief Returns the number of emitter control pins in use.
     ///
     /// \return The number of emitter control pins previously specified (1 with
-    /// setEmitterPin() or 2 with setEmitterPins()).
+    /// setEmitterPin() or 2 with setEmitterPins()). If no emitter pins have
+    /// been specified (the default), or if previously specified pins were
+    /// released with releaseEmitterPins(), this function returns 0.
     uint8_t getEmitterPinCount() { return _emitterPinCount; }
 
     /// \brief Returns the emitter control pin.

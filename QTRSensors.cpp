@@ -15,10 +15,7 @@ void QTRSensors::setTypeAnalog()
 
 void QTRSensors::setSensorPins(const uint8_t * pins, uint8_t sensorCount)
 {
-  if (sensorCount > QTRMaxSensors)
-  {
-    sensorCount = QTRMaxSensors;
-  }
+  if (sensorCount > QTRMaxSensors) { sensorCount = QTRMaxSensors; }
 
   // (Re)allocate and initialize the array if necessary.
   uint8_t * oldSensorPins = _sensorPins;
@@ -45,14 +42,15 @@ void QTRSensors::setSensorPins(const uint8_t * pins, uint8_t sensorCount)
 
 void QTRSensors::setTimeout(uint16_t timeout)
 {
+  if (timeout > 32767) { timeout = 32767; }
   _timeout = timeout;
   if (_type == QTRType::RC) { _maxValue = timeout; }
 }
 
 void QTRSensors::setSamplesPerSensor(uint8_t samples)
 {
+  if (samples > 64) { samples = 64; }
   _samplesPerSensor = samples;
-  if (_samplesPerSensor > 64) { _samplesPerSensor = 64; }
 }
 
 void QTRSensors::setEmitterPin(uint8_t emitterPin)
@@ -96,10 +94,7 @@ void QTRSensors::releaseEmitterPins()
 
 void QTRSensors::setDimmingLevel(uint8_t dimmingLevel)
 {
-  if (dimmingLevel > 31)
-  {
-    dimmingLevel = 31;
-  }
+  if (dimmingLevel > 31) { dimmingLevel = 31; }
   _dimmingLevel = dimmingLevel;
 }
 
