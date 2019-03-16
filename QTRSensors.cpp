@@ -641,7 +641,7 @@ void QTRSensors::readPrivate(uint16_t * sensorValues, uint8_t start, uint8_t ste
   }
 }
 
-int QTRSensors::readLinePrivate(uint16_t * sensorValues, QTRReadMode mode,
+uint16_t QTRSensors::readLinePrivate(uint16_t * sensorValues, QTRReadMode mode,
                          bool invertReadings)
 {
   bool onLine = false;
@@ -649,7 +649,7 @@ int QTRSensors::readLinePrivate(uint16_t * sensorValues, QTRReadMode mode,
   uint16_t sum = 0; // this is for the denominator, which is <= 64000
 
   // manual emitter control is not supported
-  if (mode == QTRReadMode::Manual) { return; }
+  if (mode == QTRReadMode::Manual) { return 0; }
 
   readCalibrated(sensorValues, mode);
 

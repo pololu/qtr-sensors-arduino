@@ -557,7 +557,7 @@ class QTRSensors
 
     void readPrivate(uint16_t * sensorValues, uint8_t start = 0, uint8_t step = 1);
 
-    int readLinePrivate(uint16_t * sensorValues, QTRReadMode mode, bool invertReadings);
+    uint16_t readLinePrivate(uint16_t * sensorValues, QTRReadMode mode, bool invertReadings);
 
     QTRType _type = QTRType::Undefined;
 
