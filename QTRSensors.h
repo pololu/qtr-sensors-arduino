@@ -319,12 +319,31 @@ class QTRSensors
     /// See also setDimmingLevel().
     uint8_t getDimmingLevel() { return _dimmingLevel; }
 
+    /// \brief Sets the line threshold.
+    ///
+    /// \param lineThreshold The line threshold (0 to 1000). A line threshold of (200)
+    /// means if line reading is under (200) there are no line. 
+    /// Acceptable values are above (200)
+    ///
+    /// The line threshold will helps you to skip false reading of line.
+    ///
+    /// This function is mainly for use to change default line threshold if
+    /// line is not enough black (white) or sensor reading is noisy.
+    void setLineThreshold(uint16_t lineThreshold);
+
+    /// \brief Returns the line threshold.
+    ///
+    /// \return The line threshold.
+    ///
+    /// See also setLineThreshold().
+    uint16_t getLineThreshold() { return _lineThreshold; }
+
     /// \brief Sets the noise threshold.
     ///
     /// \param noiseThreshold The noise threshold (0 to 1000). A noise threshold of 0
     /// corresponds to read all sensor values. Acceptable values are up to (200)
     ///
-    /// The dimming level will helps you to skip noisy input values.
+    /// The noise threshold will helps you to skip noisy input values.
     ///
     /// This function is mainly for use to change default noise threshold if map
     /// surfase is not enough flat or sensor reading is noisy.
@@ -592,7 +611,9 @@ class QTRSensors
 
     bool _dimmable = true;
     uint8_t _dimmingLevel = 0;
-    
+
+    uint16_t _lineThreshold = 200;
+
     uint16_t _noiseThreshold = 50;
 
     uint16_t _lastPosition = 0;

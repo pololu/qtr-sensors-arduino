@@ -98,6 +98,10 @@ void QTRSensors::setDimmingLevel(uint8_t dimmingLevel)
   _dimmingLevel = dimmingLevel;
 }
 
+void QTRSensors::setLineThreshold(uint16_t lineThreshold){
+  lineThreshold = _lineThreshold;
+}
+
 void QTRSensors::setNoiseThreshold(uint16_t noiseThreshold){
   noiseThreshold = _noiseThreshold;
 }
@@ -663,7 +667,7 @@ uint16_t QTRSensors::readLinePrivate(uint16_t * sensorValues, QTRReadMode mode,
     if (invertReadings) { value = 1000 - value; }
 
     // keep track of whether we see the line at all
-    if (value > 200) { onLine = true; }
+    if (value > _lineThreshold) { onLine = true; }
 
     // only average in values that are above a noise threshold
     if (value > _noiseThreshold)
