@@ -319,6 +319,24 @@ class QTRSensors
     /// See also setDimmingLevel().
     uint8_t getDimmingLevel() { return _dimmingLevel; }
 
+    /// \brief Sets the noise threshold.
+    ///
+    /// \param noiseThreshold The noise threshold (0 to 1000). A noise threshold of 0
+    /// corresponds to read all sensor values. Acceptable values are up to (200)
+    ///
+    /// The dimming level will helps you to skip noisy input values.
+    ///
+    /// This function is mainly for use to change default noise threshold if map
+    /// surfase is not enough flat or sensor reading is noisy.
+    void setNoiseThreshold(uint16_t noiseThreshold);
+
+    /// \brief Returns the noise threshold.
+    ///
+    /// \return The noise threshold.
+    ///
+    /// See also setNoiseThreshold().
+    uint16_t getNoiseThreshold() { return _noiseThreshold; }
+
     /// \brief Turns the IR LEDs off.
     ///
     /// \param emitters Which emitters to turn off, as a member of the
@@ -574,6 +592,8 @@ class QTRSensors
 
     bool _dimmable = true;
     uint8_t _dimmingLevel = 0;
+    
+    uint16_t _noiseThreshold = 50;
 
     uint16_t _lastPosition = 0;
 };
